@@ -107,15 +107,6 @@ class StandUp(QMainWindow):
     def init_settings(self):
         pass
 
-    # NOTE if the changes I make now work, delete this
-    def show_reminder_type_options(self, reminder_type):
-        if reminder_type == 'Open URL':
-            self.reminder_type = 'URL'
-            self.reminder_type_options.setCurrentWidget(self.url_options)
-        elif reminder_type == 'Focus this application':
-            self.reminder_type = 'FOCUS'
-            self.reminder_type_options.setCurrentWidget(self.app_reminder_options)
-
     # NOTE i will probably rewrite this because it does not let you view the time remaining
     def start_session(self):
         self.duration = self.duration_entry.value()
@@ -185,8 +176,8 @@ class BrowserReminderOptions(ReminderOptions):
         self.policy_group = QButtonGroup()
         tab_policies.setFlat(True)
         hbox = QHBoxLayout(tab_policies)
-        same_window = QRadioButton("Reload Window")
-        new_window = QRadioButton("New Browser Window")
+        same_window = QRadioButton("Same Window")
+        new_window = QRadioButton("New Window")
         new_tab = QRadioButton("New Tab")
 
         self.policy_group.addButton(same_window, id=0)
