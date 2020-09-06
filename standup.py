@@ -46,6 +46,8 @@ class StandUp(QMainWindow):
         self.interval_entry.setSuffix(" minutes")
 
         reminder_type_label = QLabel("Reminder Type:")
+        # NOTE TODO NOTE TODO
+        # change the signal and slots for these
         self.reminder_select = QComboBox()
         self.reminder_select.currentTextChanged.connect(self.show_reminder_type_options)
 
@@ -75,7 +77,7 @@ class StandUp(QMainWindow):
         self.reminder_type_options.addWidget(self.app_reminder_options)
 
         self.reminder_select.addItem("Open URL")
-        self.reminder_select.addItem("Focus this application")
+        self.reminder_select.addItem("Raise StandUp")
 
         # TODO add buttons - a 'Save Profile' button, a 'Set Default'
         #      and a 'Save New Profile'
