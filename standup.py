@@ -6,8 +6,8 @@
 
 import webbrowser
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QLabel, QLineEdit, QGridLayout, QComboBox, QPushButton, QVBoxLayout, QSpinBox, QFormLayout, QButtonGroup, QGroupBox, QHBoxLayout, QRadioButton
-from PyQt5.QtCore import QTimer, QTime, QSettings, Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QLabel, QLineEdit, QGridLayout, QComboBox, QPushButton, QVBoxLayout, QSpinBox, QFormLayout, QButtonGroup, QGroupBox, QHBoxLayout, QRadioButton, QProgressBar
+from PyQt5.QtCore import QTimer, QTime, QSettings, Qt, QBasicTimer
 
 
 class StandUp(QMainWindow):
@@ -16,8 +16,6 @@ class StandUp(QMainWindow):
         super().__init__()
 
         self.settings = QSettings("manschloemark", "StandUp")
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.remind)
 
         self.init_ui()
         self.init_settings()
@@ -65,7 +63,7 @@ class StandUp(QMainWindow):
         self.reminder_type_options.addWidget(self.app_reminder_options)
 
         self.reminder_select.addItem("Open URL")
-        self.reminder_select.addItem("Raise StandUp")
+        self.reminder_select.addItem("Raise StandUp Window")
 
         # TODO add buttons - a 'Save Profile' button, a 'Set Default'
         #      and a 'Save New Profile'
@@ -89,12 +87,12 @@ class StandUp(QMainWindow):
         self.running_vbox = QVBoxLayout(self.running_screen)
 
         running_label = QLabel("Session Running")
-        self.next_break = QLabel()
+        self.timer_progress= QProgressBar()
         stop_button = QPushButton("Stop Session")
         stop_button.clicked.connect(self.stop_session)
 
         self.running_vbox.addWidget(running_label)
-        self.running_vbox.addWidget(self.next_break)
+        self.running_vbox.addWidget(self.timer_progress)
         self.running_vbox.addWidget(stop_button)
         self.running_vbox.setAlignment(Qt.AlignCenter)
 
@@ -107,49 +105,72 @@ class StandUp(QMainWindow):
     def init_settings(self):
         pass
 
+    def init_reminder(self):
+        return self.reminder_type_options.currentWidget().get_reminder()
+
     # NOTE i will probably rewrite this because it does not let you view the time remaining
     def start_session(self):
-        self.duration = self.duration_entry.value()
-        self.interval = self.interval_entry.value()
+        self.reminder = self.init_reminder()
 
-        if self.duration == 0:
-            self.breaks_remaining = -1
-        else:
-            self.breaks_remaining = int(((self.duration * 60) // self.interval))
-        timeout = self.interval * 60 * 1000
+        # TODO Refactor this stuff!
+        # TODO CHANGE * 5 to * 60 in both places!
+        self.duration = self.duration_entry.value() * 2 * 5 # hours to seconds
+        self.interval = self.interval_entry.value() * 5 # minutes to seconds # NOTE NOTE 5 is just so testing is faster!
+        self.time_elapsed = 0
 
+        self.reset_progress_bar(self.interval)
+        self.start_interval()
 
-        self.timer.start(timeout)
+    def start_interval(self):
+        self.timer_id = self.startTimer(1000) # 1 second timer
         self.stack.setCurrentWidget(self.running_screen)
 
     def stop_session(self):
-        self.timer.stop()
+        self.killTimer(self.timer_id)
+        self.timer_id = None
         self.stack.setCurrentWidget(self.start_screen)
 
-    def remind(self):
-        # First, trigger the reminder
-        # TODO validate urls
-        if self.reminder_type == 'URL':
-            webbrowser.open_new_tab(self.url_entry.text())
-        elif self.reminder_type == 'FOCUS':
-            self.stack.setCurrentWidget(self.reminder_screen)
-            self.reminder_message.setText(self.reminder_text.text())
-            # TODO make this app the focus of the PC
+    def timerEvent(self, te):
+        # Make sure you have the right timer
+        # NOTE maybe the timer should stop while the reminder screen is open
+        self.time_elapsed += 1
+        if self.timer_id == te.timerId():
+            if self.time_elapsed == self.duration:
+                # NOTE this currently just always triggers a reminder
+                #      when after the amount of time set in session_entry
+                #      but this is not always a good thing.
+                #      What if the session_duration is evenly divisible by
+                #      the interval?
+                # NOTE it might be cool to have a different reminder when the
+                #      session finishes. So the user knows they are done.
+                self.reminder.handle()
+                self.killTimer(self.timer_id)
+                self.timer_id = None
+            elif self.time_elapsed % self.interval == 0:
+                self.reminder.handle()
+                self.killTimer(self.timer_id)
+                if self.duration and self.time_elapsed + self.interval > self.duration:
+                    self.reset_progress_bar(self.duration - self.time_elapsed)
+                else:
+                    self.reset_progress_bar(self.interval)
+            else:
+                # Timer should keep going, UI should update time visualizer
+                self.update_progress_bar(self.time_elapsed % self.interval)
+        else:
+            raise ValueError(f"Uh so for some reason the timer that triggered this even is different from the last timer you created... oops? self.timer_id = {self.timer_id} vs. {te.timerId()}")
 
-        # Second, find out if you are done
-        if self.breaks_remaining > 0:
-            self.breaks_remaining -= 1
-        if self.breaks_remaining == 0:
-            self.stop_timer()
-            return
+    def reset_progress_bar(self, maximum):
+        self.timer_progress.setValue(0)
+        self.timer_progress.setMaximum(maximum)
+
+    def update_progress_bar(self, secs_remaining):
+        self.timer_progress.setValue(secs_remaining)
 
     def close_reminder(self):
-        if self.timer.isActive():
-            time_left = QTime.currentTime().addSecs(self.interval * 60)
-            self.next_break.setText(f"Next break at: {time_left.toString('h:m p')}")
-            self.stack.setCurrentWidget(self.running_screen)
-        else:
+        if self.timer_id is None:
             self.stack.setCurrentWidget(self.start_screen)
+        else:
+            self.start_interval()
 
 class ReminderOptions(QWidget):
 
@@ -183,6 +204,8 @@ class BrowserReminderOptions(ReminderOptions):
         self.policy_group.addButton(same_window, id=0)
         self.policy_group.addButton(new_window, id=1)
         self.policy_group.addButton(new_tab, id=2)
+
+        new_tab.setChecked(True) # By default do new tab. I think it's the most reasonable.
         hbox.addWidget(same_window)
         hbox.addWidget(new_window)
         hbox.addWidget(new_tab)
@@ -223,6 +246,9 @@ class RaiseWindowReminderOptions(ReminderOptions):
 class Reminder:
     def __init__(self):
         super().__init__()
+
+    def load_profile(self):
+        raise NotImplementedError
 
     def handle(self):
         raise NotImplementedError
