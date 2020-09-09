@@ -19,13 +19,13 @@ class ProgressRing(QWidget):
     def __init__(self):
         super().__init__()
         self.radius = 0
+        self.timer_id = None
         self.duration = None
         self.value = None
         self.show_seconds, self.show_minutes, self.show_hours = False, False, False
 
     def set_timer(self, duration, timeout=1000):
         self.set_duration(duration)
-        self.set_text_format()
 
         self.value = self.duration
         self.timer_id = self.startTimer(timeout)
@@ -39,6 +39,7 @@ class ProgressRing(QWidget):
 
     def set_duration(self, duration):
         self.duration = duration
+        self.set_text_format()
 
     def set_text_format(self):
         """ Determine based on the duration if the clock should display seconds, minutes, and/or hours """
@@ -55,13 +56,12 @@ class ProgressRing(QWidget):
         #      there has to be a better way to do this
         if self.timer_id is None:
             return "Not Running"
-        if self.value is None:
-            return ''
         secs = self.value
+        # Convert seconds remaining to hours, minutes, seconds
         hours = secs // 60 // 60
         mins = secs // 60 % 60
         secs = secs % 60 % 60
-        hours = secs // 60 // 60
+        # build a string based on the show_hours/minutes/seconds flags
         time_remaining = ''
         if self.show_hours:
             time_remaining += f'{hours:0>2}'
