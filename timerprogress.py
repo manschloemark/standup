@@ -112,6 +112,7 @@ class ProgressRing(QWidget):
 
         progress_circle_pen = QPen(QColor(0, 100, 50))
         progress_circle_pen.setWidth(12)
+        progress_circle_pen.setCapStyle(Qt.RoundCap)
 
         painter.setPen(progress_circle_pen)
         painter.drawArc(self.square, start_angle, angle_span)
@@ -138,9 +139,9 @@ if __name__ == '__main__':
 
     test = ProgressRing()
     test.setWindowTitle("Timer")
-    test.finished.connect(lambda: test.start_timer(60))
+    test.finished.connect(lambda: test.set_timer(60))
     test.show()
-    test.start_timer(2)
+    test.set_timer(4)
     print(test.circumference())
 
     sys.exit(app.exec_())

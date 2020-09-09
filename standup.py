@@ -7,7 +7,7 @@
 import math
 import webbrowser
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QLabel, QLineEdit, QGridLayout, QComboBox, QPushButton, QVBoxLayout, QSpinBox, QFormLayout, QButtonGroup, QGroupBox, QHBoxLayout, QRadioButton, QProgressBar
+from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QLabel, QLineEdit, QGridLayout, QComboBox, QPushButton, QVBoxLayout, QSpinBox, QFormLayout, QButtonGroup, QGroupBox, QHBoxLayout, QRadioButton, QTextEdit
 from PyQt5.QtCore import QTimer, QTime, QSettings, Qt, QBasicTimer
 
 from timerprogress import ProgressRing
@@ -172,7 +172,7 @@ class StandUp(QMainWindow):
         # TODO implement lists of intervals
         breaks = None
         self.break_intervals = False
-        self.infinite = bool(duration)
+        self.infinite = not bool(duration)
         if self.infinite:
             self.set_infinite_intervals(interval, breaks)
         else:
@@ -181,7 +181,7 @@ class StandUp(QMainWindow):
         self.start_next_interval()
 
     def start_next_interval(self):
-        #self.set_status_bar()
+        self.set_status_bar() # Primaily to debug
         self.timer_progress.set_timer(self.intervals[self.interval_index % len(self.intervals)])
         self.stack.setCurrentWidget(self.running_screen)
 
@@ -270,12 +270,12 @@ class RaiseWindowReminderOptions(ReminderOptions):
         form = QFormLayout(self)
 
         reminder_message_label = QLabel("Reminder Message:")
-        self.reminder_input = QLineEdit()
+        self.reminder_input = QTextEdit()
 
         form.addRow(reminder_message_label, self.reminder_input)
 
     def set_reminder_text(self):
-        self.message_widget.setText(self.reminder_input.text())
+        self.message_widget.setText(self.reminder_input.toPlainText())
 
     def get_reminder(self):
         self.set_reminder_text()
