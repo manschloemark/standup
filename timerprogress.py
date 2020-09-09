@@ -9,6 +9,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QRect, QPoint
 import math
 
 
+# TODO learn how to make this widget follow a Qt theme
 class ProgressRing(QWidget):
     """
         Custom widget that acts like a QProgressBar but designed to display times
