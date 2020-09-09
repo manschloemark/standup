@@ -25,9 +25,9 @@ class ProgressRing(QWidget):
         self.show_seconds, self.show_minutes, self.show_hours = False, False, False
 
     def set_timer(self, duration, timeout=1000):
-        self.set_duration(duration)
-
+        self.duration = duration
         self.value = self.duration
+        self.set_text_format()
         self.timer_id = self.startTimer(timeout)
 
     def start_timer(self, timeout=1000):
@@ -56,11 +56,8 @@ class ProgressRing(QWidget):
         #      there has to be a better way to do this
         if self.timer_id is None:
             return "Not Running"
-        secs = self.value
-        # Convert seconds remaining to hours, minutes, seconds
-        hours = secs // 60 // 60
-        mins = secs // 60 % 60
-        secs = secs % 60 % 60
+        m, s = divmod(self.value, 60)
+        h, m = divmod(m, 60)
         # build a string based on the show_hours/minutes/seconds flags
         time_remaining = ''
         if self.show_hours:

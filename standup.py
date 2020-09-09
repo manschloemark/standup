@@ -4,12 +4,13 @@
     long hours at the computer
 """
 
+import math
 import webbrowser
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QLabel, QLineEdit, QGridLayout, QComboBox, QPushButton, QVBoxLayout, QSpinBox, QFormLayout, QButtonGroup, QGroupBox, QHBoxLayout, QRadioButton, QProgressBar
 from PyQt5.QtCore import QTimer, QTime, QSettings, Qt, QBasicTimer
 
-from timerprogress import TimerProgressBar
+from timerprogress import ProgressRing
 
 class StandUp(QMainWindow):
 
@@ -58,7 +59,7 @@ class StandUp(QMainWindow):
         self.reminder_select.currentIndexChanged.connect(self.reminder_type_options.setCurrentIndex)
 
         self.url_options = BrowserReminderOptions()
-        self.app_reminder_options = RaiseWindowReminderOptions(self.stack, self.reminder_screen, self.reminder_message)
+        self.app_reminder_options = RaiseWindowReminderOptions(self.reminder_message)
 
         self.reminder_type_options.addWidget(self.url_options)
         self.reminder_type_options.addWidget(self.app_reminder_options)
@@ -89,7 +90,7 @@ class StandUp(QMainWindow):
 
         running_label = QLabel("Session Running")
         self.timer_progress= ProgressRing()
-        self.timer_progress.finished.connect(self.
+        self.timer_progress.finished.connect(self.interval_finished)
         stop_button = QPushButton("Stop Session")
         stop_button.clicked.connect(self.stop_session)
 
@@ -110,6 +111,44 @@ class StandUp(QMainWindow):
     def init_reminder(self):
         return self.reminder_type_options.currentWidget().get_reminder()
 
+    def set_infinite_intervals(self, works, breaks):
+        self.infinite = True
+        # This is so impractical it's hilarious. I'll leave it in for now.
+        # Calculate number of times you need to iterate each list until the zipped sequence repeats
+        if breaks:
+            self.intervals = []
+            lcm = (len(works) * len(breaks)) // math.gcd(len(works), len(breaks))
+            for index in range(lcm):
+                self.intervals.append(works[index])
+                self.intervals.append(breaks[index])
+        else:
+            self.intervals = works
+
+
+
+    def set_finite_intervals(self, duration, works, breaks):
+        self.infinite = False
+        self.intervals = []
+        index = 0
+        # If works and breaks are lists this will not work
+        # Use walrus here so you don't have to do sum(intervals) twice
+        while (current_sum := sum(self.intervals)) != duration:
+            if breaks:
+                if index % 2 == 0:
+                    next_interval = works[index // 2 % len(works)]
+                else:
+                    next_interval = breaks[index // 2 % len(breaks)]
+            else:
+                next_interval = works[index % len(works)]
+
+            if current_sum + next_interval > duration:
+                if index % 2 == 1:
+                    self.intervals[-1] += (duration - current_sum)
+                else:
+                    self.intervals.append(duration - current_sum)
+            else:
+                self.intervals.append(next_interval)
+
     # NOTE i will probably rewrite this because it does not let you view the time remaining
     def start_session(self):
         self.reminder = self.init_reminder()
@@ -118,16 +157,27 @@ class StandUp(QMainWindow):
         # TODO CHANGE * 5 to * 60 in both places
         #self.duration = self.duration_entry.value() * 60 * 60 # hours to seconds
         #self.interval = self.interval_entry.value() * 60 # minutes to seconds
-        self.duration = self.duration_entry.value() * 2 * 5 # hours to seconds
-        self.interval = self.interval_entry.value() * 5 # minutes to seconds # NOTE NOTE 5 is just so testing is faster!
+        duration = self.duration_entry.value() * 2 * 5 # hours to seconds
+        interval = [(self.interval_entry.value() * 5)] # minutes to seconds # NOTE NOTE 5 is just so testing is faster!
+        # NOTE when I implement breaks I must be sure to include a break_intervals flag
+        #      so the reminder handler knows whether or not to account for breaks.
+        breaks = None
+        self.break_intervals = False
+        if duration:
+            self.set_finite_intervals(duration, interval, breaks)
+        else:
+            self.set_infinite_intervals(interval, breaks)
+        self.interval_index = 0
         # NOTE since the Progress Ring is now the widget that contains the timer and deals with timerEvents
         #      I will need to refactor this class to apropriately send intervals to the ProgressRing,
         #      and this class will need to make sure it stops when the session duration ends.
 
-        self.start_interval()
+        print(self.intervals)
+        self.start_next_interval()
 
-    def next_interval(self):
-        self.timer_progress.start_timer(self.interval)
+    def start_next_interval(self):
+        print(self.intervals[self.interval_index % len(self.intervals)])
+        self.timer_progress.set_timer(self.intervals[self.interval_index % len(self.intervals)])
         self.stack.setCurrentWidget(self.running_screen)
 
     def stop_session(self):
@@ -171,11 +221,27 @@ class StandUp(QMainWindow):
 #    def update_progress_bar(self, secs_remaining):
 #        self.timer_progress.setValue(secs_remaining)
 
-    def close_reminder(self):
-        if self.timer_id is None:
+    def interval_finished(self):
+        self.interval_index += 1
+        if not self.infinite and self.interval_index >= len(self.intervals):
+            # TODO maybe make a separate screen that tells you when you are done
             self.stack.setCurrentWidget(self.start_screen)
+        # Must check if this session has any break intervals.
+        # If not then very interval is a work interval, which means you call reminder.handle()
+        elif self.break_intervals and self.interval_index % 2 == 0:
+            # If the interval index is now even that means you just finished an odd-indexed interval
+            # which means you just finished a break.
+            # For now, breaks will go straight to the next work interval after finishing their timer.
+            self.start_next_interval()
         else:
-            self.next_interval()
+            self.reminder.handle()
+            self.stack.setCurrentWidget(self.reminder_screen)
+
+    def close_reminder(self):
+
+            self.stack.setCurrentWidget(self.start_screen)
+
+            self.start_next_interval()
 
 class ReminderOptions(QWidget):
 
@@ -223,11 +289,8 @@ class BrowserReminderOptions(ReminderOptions):
 
 class RaiseWindowReminderOptions(ReminderOptions):
 
-    def __init__(self, parent_stack, reminder_widget, message_widget):
+    def __init__(self, message_widget):
         super().__init__()
-
-        self.parent_stack = parent_stack
-        self.reminder_widget = reminder_widget
         self.message_widget = message_widget
 
         self.init_ui()
@@ -245,7 +308,7 @@ class RaiseWindowReminderOptions(ReminderOptions):
 
     def get_reminder(self):
         self.set_reminder_text()
-        return RaiseWindowReminder(self.parent_stack, self.reminder_widget)
+        return RaiseWindowReminder(self)
 
 
 class Reminder:
@@ -270,14 +333,12 @@ class BrowserReminder(Reminder):
 
 class RaiseWindowReminder(Reminder):
 
-    def __init__(self, parent_stack, reminder_widget):
+    def __init__(self, parent):
         super().__init__()
-        self.parent_stack = parent_stack
-        self.reminder_widget = reminder_widget
+        self.parent = parent
 
     def handle(self):
-        self.parent_stack.setCurrentWidget(self.reminder_widget)
-        self.reminder_widget.activateWindow()
+        self.parent.activateWindow()
 
 
 def main():
