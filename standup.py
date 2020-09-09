@@ -24,14 +24,20 @@ class StandUp(QMainWindow):
 
     def init_ui(self):
         self.stack = QStackedWidget()
+        self.status = self.statusBar()
 
         self.reminder_screen = QWidget()
         reminder_vbox = QVBoxLayout(self.reminder_screen)
+
+        reminder_title = QLabel("Stand Up!")
         self.reminder_message = QLabel()
-        close_reminder = QPushButton("Close Reminder")
+        close_reminder = QPushButton("Continue")
         close_reminder.clicked.connect(self.close_reminder)
+
+        reminder_vbox.addWidget(reminder_title)
         reminder_vbox.addWidget(self.reminder_message)
         reminder_vbox.addWidget(close_reminder)
+        reminder_vbox.setAlignment(Qt.AlignCenter)
 
         self.start_screen = QWidget()
         self.start_grid = QGridLayout(self.start_screen)
@@ -90,7 +96,6 @@ class StandUp(QMainWindow):
 
         running_label = QLabel("Session Running")
         self.timer_progress = ProgressRing()
-        #self.timer_progress.setFixedSize(200, 200)
         self.timer_progress.finished.connect(self.interval_finished)
         stop_button = QPushButton("Stop Session")
         stop_button.clicked.connect(self.stop_session)
@@ -112,8 +117,11 @@ class StandUp(QMainWindow):
     def init_reminder(self):
         return self.reminder_type_options.currentWidget().get_reminder()
 
+    def set_status_bar(self):
+        status_text = str(self.intervals[self.interval_index % len(self.intervals):])
+        self.status.showMessage(status_text)
+
     def set_infinite_intervals(self, works, breaks):
-        self.infinite = True
         # This is so impractical it's hilarious. I'll leave it in for now.
         # Calculate number of times you need to iterate each list until the zipped sequence repeats
         if breaks:
@@ -125,10 +133,7 @@ class StandUp(QMainWindow):
         else:
             self.intervals = works
 
-
-
     def set_finite_intervals(self, duration, works, breaks):
-        self.infinite = False
         self.intervals = []
         index = 0
         # If works and breaks are lists this will not work
@@ -156,28 +161,28 @@ class StandUp(QMainWindow):
 
         # TODO Refactor this stuff
         # TODO CHANGE * 5 to * 60 in both places
-        #self.duration = self.duration_entry.value() * 60 * 60 # hours to seconds
-        #self.interval = self.interval_entry.value() * 60 # minutes to seconds
+        #duration = self.duration_entry.value() * 60 * 60 # hours to seconds
+        #interval = self.interval_entry.value() * 60 # minutes to seconds
         duration = self.duration_entry.value() * 2 * 5 # hours to seconds
         interval = [(self.interval_entry.value() * 5)] # minutes to seconds # NOTE NOTE 5 is just so testing is faster!
         # NOTE when I implement breaks I must be sure to include a break_intervals flag
         #      so the reminder handler knows whether or not to account for breaks.
         breaks = None
         self.break_intervals = False
-        if duration:
-            self.set_finite_intervals(duration, interval, breaks)
-        else:
+        self.infinite = duration == 0
+        if self.infinite:
             self.set_infinite_intervals(interval, breaks)
+        else:
+            self.set_finite_intervals(duration, interval, breaks)
         self.interval_index = 0
         # NOTE since the Progress Ring is now the widget that contains the timer and deals with timerEvents
         #      I will need to refactor this class to apropriately send intervals to the ProgressRing,
         #      and this class will need to make sure it stops when the session duration ends.
 
-        print(self.intervals)
         self.start_next_interval()
 
     def start_next_interval(self):
-        print(self.intervals[self.interval_index % len(self.intervals)])
+        #self.set_status_bar()
         self.timer_progress.set_timer(self.intervals[self.interval_index % len(self.intervals)])
         self.stack.setCurrentWidget(self.running_screen)
 
@@ -185,46 +190,11 @@ class StandUp(QMainWindow):
         self.timer_progress.stop_timer()
         self.stack.setCurrentWidget(self.start_screen)
 
-#    def timerEvent(self, te):
-#        # Make sure you have the right timer
-#        # NOTE maybe the timer should stop while the reminder screen is open
-#        self.time_elapsed += 1
-#        if self.timer_id == te.timerId():
-#            if self.time_elapsed == self.duration:
-#                # NOTE this currently just always triggers a reminder
-#                #      when after the amount of time set in session_entry
-#                #      but this is not always a good thing.
-#                #      What if the session_duration is evenly divisible by
-#                #      the interval?
-#                # NOTE it might be cool to have a different reminder when the
-#                #      session finishes. So the user knows they are done.
-#                self.reminder.handle()
-#                self.killTimer(self.timer_id)
-#                self.timer_id = None
-#            elif self.time_elapsed % self.interval == 0:
-#                self.reminder.handle()
-#                self.killTimer(self.timer_id)
-#                if self.duration and self.time_elapsed + self.interval > self.duration:
-#                    self.reset_progress_bar(self.duration - self.time_elapsed)
-#                else:
-#                    self.reset_progress_bar(self.interval)
-#            else:
-#                # Timer should keep going, UI should update time visualizer
-#                self.update_progress_bar(self.time_elapsed % self.interval)
-#        else:
-#            raise ValueError(f"Uh so for some reason the timer that triggered this even is different from the last timer you created... oops? self.timer_id = {self.timer_id} vs. {te.timerId()}")
-#
-#    def reset_progress_bar(self, maximum):
-#        self.timer_progress.setValue(0)
-#        self.timer_progress.setMaximum(maximum)
-#
-#    def update_progress_bar(self, secs_remaining):
-#        self.timer_progress.setValue(secs_remaining)
-
     def interval_finished(self):
         self.interval_index += 1
         if not self.infinite and self.interval_index >= len(self.intervals):
             # TODO maybe make a separate screen that tells you when you are done
+            self.reminder.handle()
             self.stack.setCurrentWidget(self.start_screen)
         # Must check if this session has any break intervals.
         # If not then very interval is a work interval, which means you call reminder.handle()
