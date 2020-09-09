@@ -89,7 +89,8 @@ class StandUp(QMainWindow):
         self.running_vbox = QVBoxLayout(self.running_screen)
 
         running_label = QLabel("Session Running")
-        self.timer_progress= ProgressRing()
+        self.timer_progress = ProgressRing()
+        #self.timer_progress.setFixedSize(200, 200)
         self.timer_progress.finished.connect(self.interval_finished)
         stop_button = QPushButton("Stop Session")
         stop_button.clicked.connect(self.stop_session)
@@ -181,8 +182,7 @@ class StandUp(QMainWindow):
         self.stack.setCurrentWidget(self.running_screen)
 
     def stop_session(self):
-        self.killTimer(self.timer_id)
-        self.timer_id = None
+        self.timer_progress.stop_timer()
         self.stack.setCurrentWidget(self.start_screen)
 
 #    def timerEvent(self, te):
@@ -238,9 +238,7 @@ class StandUp(QMainWindow):
             self.stack.setCurrentWidget(self.reminder_screen)
 
     def close_reminder(self):
-
             self.stack.setCurrentWidget(self.start_screen)
-
             self.start_next_interval()
 
 class ReminderOptions(QWidget):

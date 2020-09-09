@@ -2,7 +2,7 @@
     This module contains a custom widget that functions as a countdown timer
     with a round progress bar
 """
-from PyQt5.QtWidgets import QProgressBar, QWidget, QApplication
+from PyQt5.QtWidgets import QProgressBar, QWidget, QApplication, QSizePolicy
 from PyQt5.QtGui import QPainter, QColor, QFont, QPen
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QPoint
 
@@ -18,6 +18,7 @@ class ProgressRing(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.radius = 0
         self.timer_id = None
         self.duration = None
@@ -46,10 +47,13 @@ class ProgressRing(QWidget):
         # NOTE I feel like there must be a better way to do this
         if self.duration > 0:
             self.show_seconds = True
+            self.font_div = 2
         if self.duration // 60:
             self.show_minutes = True
+            self.font_div = 4
         if self.duration // 60 // 60:
             self.show_hours = True
+            self.font_div = 5
 
     def text(self):
         # NOTE these calculations work but are very ugly and hastily made
@@ -61,15 +65,15 @@ class ProgressRing(QWidget):
         # build a string based on the show_hours/minutes/seconds flags
         time_remaining = ''
         if self.show_hours:
-            time_remaining += f'{hours:0>2}'
+            time_remaining += f'{h:0>2}'
             if self.show_minutes:
                 time_remaining += ':'
         if self.show_minutes:
-            time_remaining += f'{mins:0>2}'
+            time_remaining += f'{m:0>2}'
             if self.show_seconds:
                 time_remaining += ':'
         if self.show_seconds:
-            time_remaining += f'{secs:0>2}'
+            time_remaining += f'{s:0>2}'
         return time_remaining
 
     def circumference(self):
@@ -115,14 +119,13 @@ class ProgressRing(QWidget):
     def drawText(self, paint_event, painter):
         painter.setPen(QColor(0, 0, 0))
         timer_font = QApplication.instance().font()
-        timer_font.setPointSize(self.radius // 5)
+        timer_font.setPointSize(self.radius // self.font_div)
         painter.setFont(timer_font)
         painter.drawText(paint_event.rect(), Qt.AlignCenter, self.text())
 
     def timerEvent(self, timer_event):
         if self.timer_id == timer_event.timerId():
             self.value -= 1
-
             self.repaint()
             if self.value == 0:
                 self.killTimer(self.timer_id)
