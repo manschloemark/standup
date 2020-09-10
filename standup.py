@@ -192,14 +192,14 @@ class StandUp(QMainWindow):
         #      the user can enter lists of values for the intervals, and the program will cycle
         #      through the list until the session duration passes.
         # The user has no way to implement them yet, but my program is capable of handling them.
-        work_intervals = [(self.work_entry.value() * 1)] # minutes to seconds
+        work_intervals = [(self.work_entry.value() * 60)] # minutes to seconds
         # NOTE when I implement breaks I must be sure to include a break_intervals flag
         #      so the reminder handler knows whether or not to account for breaks.
         # TODO implement breaks
         # TODO implement lists of intervals
         self.has_break_intervals = self.break_checkbox.isChecked()
         if self.has_break_intervals:
-            break_intervals = [(self.break_entry.value() * 1)]
+            break_intervals = [(self.break_entry.value() * 60)]
         else:
             break_intervals = None
 
@@ -207,7 +207,7 @@ class StandUp(QMainWindow):
         if self.infinite:
             self.set_infinite_intervals(work_intervals, break_intervals)
         else:
-            self.set_finite_intervals(duration, work_intervals, break_intervals)
+            self.set_finite_intervals(session_duration, work_intervals, break_intervals)
         self.interval_index = 0
         self.start_next_interval()
 
