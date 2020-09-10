@@ -14,9 +14,6 @@ from timerprogress import ProgressRing
 
 class StandUp(QMainWindow):
 
-    work_text = "Focus on Work"
-    break_message = "Stand up, stretch, and relax!"
-
     def __init__(self):
         super().__init__()
 
@@ -33,12 +30,13 @@ class StandUp(QMainWindow):
         # Can be customized when the user chooses the RaiseWindow reminder
         self.reminder_screen = QWidget()
         reminder_vbox = QVBoxLayout(self.reminder_screen)
-        reminder_title = QLabel("Stand Up!")
+        reminder_heading = QLabel("Stand Up!")
+        reminder_heading.setProperty("font-class", "heading")
         self.reminder_label = QLabel()
         close_reminder = QPushButton("Continue")
         close_reminder.clicked.connect(self.close_reminder)
 
-        reminder_vbox.addWidget(reminder_title)
+        reminder_vbox.addWidget(reminder_heading)
         reminder_vbox.addWidget(self.reminder_label)
         reminder_vbox.addWidget(close_reminder)
         reminder_vbox.setAlignment(Qt.AlignCenter)
@@ -48,7 +46,9 @@ class StandUp(QMainWindow):
         self.start_grid = QGridLayout(self.start_screen)
 
         app_title = QLabel("StandUp!")
+        app_title.setProperty("font-class", "title")
         settings_label = QLabel("Session Settings")
+        settings_label.setProperty("font-class", "heading")
         # TODO put a label and combo box for user profiles
         # TODO learn to implement custom QAbstractSpinBox
         #      that intuitively lets user enter [Hhours Mmins]
@@ -116,13 +116,14 @@ class StandUp(QMainWindow):
         self.running_screen = QWidget()
         self.running_vbox = QVBoxLayout(self.running_screen)
 
-        #running_label = QLabel("Session Running")
+        self.running_label = QLabel()
+        self.running_label.setProperty("font-class", "heading")
         self.timer = ProgressRing()
         self.timer.finished.connect(self.interval_finished)
         stop_button = QPushButton("Stop Session")
         stop_button.clicked.connect(self.stop_session)
 
-        self.running_vbox.addWidget(self.reminder_label)
+        self.running_vbox.addWidget(self.running_label)
         self.running_vbox.addWidget(self.timer)
         self.running_vbox.addWidget(stop_button)
         self.running_vbox.setAlignment(Qt.AlignCenter)
@@ -213,6 +214,10 @@ class StandUp(QMainWindow):
     def start_next_interval(self):
         #self.set_status_bar() # Primaily to debug
         self.timer.set_timer(self.intervals[self.interval_index % len(self.intervals)])
+        if self.has_break_intervals and self.interval_index % 2 == 1:
+            self.running_label.setText("Break Timer")
+        else:
+            self.running_label.setText("Work Timer")
         self.stack.setCurrentWidget(self.running_screen)
 
     def set_work_message(self):
@@ -233,22 +238,14 @@ class StandUp(QMainWindow):
         # If not then very interval must be a work interval, which means you call reminder.handle()
         # If the session does have intervals, then every even interval index means you should start a
         # break interval.
-        elif self.has_break_intervals:
-
-            if self.interval_index % 2 == 0:
-            # If the interval index is now even that means you just finished an odd-indexed interval
-            # which means you just finished a break.
-            # For now, breaks will go straight to the next work interval after finishing their timer.
-                self.set_work_message()
-            else:
-                self.reminder.handle()
+        elif self.has_break_intervals and self.interval_index % 2 == 0:
             self.start_next_interval()
         else:
             self.reminder.handle()
             self.stack.setCurrentWidget(self.reminder_screen)
 
+    # NOTE this method doesn't know what it's doing. Neither do I.
     def close_reminder(self):
-            self.stack.setCurrentWidget(self.start_screen)
             self.start_next_interval()
 
 
@@ -311,16 +308,16 @@ class RaiseWindowReminderOptions(ReminderOptions):
         form = QFormLayout(self)
 
         reminder_message_label = QLabel("Reminder Message:")
-        self.reminder_input = QTextEdit()
+        self.reminder_input = QLineEdit()
 
         form.addRow(reminder_message_label, self.reminder_input)
 
     def set_reminder_text(self):
-        self.message_widget.setText(self.reminder_input.toPlainText())
+        self.message_widget.setText(self.reminder_input.text())
 
     def get_reminder(self):
         self.set_reminder_text()
-        return RaiseWindowReminder(self, self.message_widget, self.reminder_input.toPlainText())
+        return RaiseWindowReminder(self)
 
 
 class Reminder:
@@ -342,17 +339,11 @@ class BrowserReminder(Reminder):
 
 class RaiseWindowReminder(Reminder):
 
-    def __init__(self, parent, message_widget, message):
+    def __init__(self, parent):
         super().__init__()
         self.window = parent.window()
-        self.message_widget = message_widget
-        self.message = message
-
-    def set_message_text(self):
-        self.message_widget.setText(self.message)
 
     def handle(self):
-        self.set_message_text()
         self.window.setWindowState(self.window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
         self.window.activateWindow()
 
@@ -362,6 +353,8 @@ def main():
     app = QApplication(sys.argv)
 
     standup = StandUp()
+    with open("standup-styles.qss") as styles:
+        standup.setStyleSheet(styles.read())
     standup.show()
 
     sys.exit(app.exec_())

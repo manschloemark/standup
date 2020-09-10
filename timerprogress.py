@@ -32,6 +32,7 @@ class ProgressRing(QWidget):
 
     def start_timer(self, timeout=1000):
         self.value = self.duration
+        self.repaint()
         self.timer_id = self.startTimer(timeout)
 
     def stop_timer(self):
@@ -58,8 +59,6 @@ class ProgressRing(QWidget):
     def text(self):
         # NOTE these calculations work but are very ugly and hastily made
         #      there has to be a better way to do this
-        if self.timer_id is None:
-            return "Not Running"
         m, s = divmod(self.value, 60)
         h, m = divmod(m, 60)
         # build a string based on the show_hours/minutes/seconds flags
@@ -110,6 +109,14 @@ class ProgressRing(QWidget):
     def drawProgressCircle(self, paint_event, painter):
         if not self.duration:
             return
+        progress_circle_pen = QPen(QColor(0, 100, 50))
+        progress_circle_pen.setWidth(12)
+        progress_circle_pen.setCapStyle(Qt.RoundCap)
+        painter.setPen(progress_circle_pen)
+
+        if self.value == 0:
+            painter.drawEllipse(self.square)
+            return
         # The QPainter.drawArc() method specifies the angles
         # to 1 / 16th of a degree, that's why I multiply degrees by 16
         seconds_per_step = self.duration / (360 * 16)
@@ -120,11 +127,6 @@ class ProgressRing(QWidget):
 
         start_angle = (90 * 16) # Start at the top of the circle
 
-        progress_circle_pen = QPen(QColor(0, 100, 50))
-        progress_circle_pen.setWidth(12)
-        progress_circle_pen.setCapStyle(Qt.RoundCap)
-
-        painter.setPen(progress_circle_pen)
         painter.drawArc(self.square, start_angle, angle_span)
 
 
@@ -139,9 +141,20 @@ class ProgressRing(QWidget):
         if self.timer_id == timer_event.timerId():
             self.value -= 1
             self.repaint()
+            # The reason I do this if-statement is so the user has a moment to see the circle completely colored in.
+            # IDK. It's probably not the best way to handle this.
+            # A better way is probably for the standup widget to leave the timer on the screen.
+            # Forcing the timer to take an extra 600ms kind of invalidates the timer.
+            # IDK.
+            # NOTE consider changing the standup method and returning this method back to normal
             if self.value == 0:
                 self.killTimer(self.timer_id)
-                self.finished.emit()
+                self.timer_id = None
+                self.final_timer = self.startTimer(600)
+        elif self.final_timer == timer_event.timerId():
+            self.killTimer(self.final_timer)
+            self.final_timer = None
+            self.finished.emit()
 
 if __name__ == '__main__':
     import sys
