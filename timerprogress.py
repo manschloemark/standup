@@ -23,16 +23,15 @@ class ProgressRing(QWidget):
         self.radius = 0
         self.timer_id = None
         self.duration = None
-        self.value = None
         self.show_seconds, self.show_minutes, self.show_hours = False, False, False
 
-    def set_timer(self, duration, timeout=1000):
-        self.duration = duration
-        self.value = self.duration
+    def set_timer(self, interval, timeout=1000):
+        self.duration = interval
         self.set_text_format()
-        self.timer_id = self.startTimer(timeout)
+        self.start_timer(timeout)
 
     def start_timer(self, timeout=1000):
+        self.value = self.duration
         self.timer_id = self.startTimer(timeout)
 
     def stop_timer(self):
@@ -64,6 +63,14 @@ class ProgressRing(QWidget):
         m, s = divmod(self.value, 60)
         h, m = divmod(m, 60)
         # build a string based on the show_hours/minutes/seconds flags
+        # NOTE the reason I use show_[seconds/minutes/hours] flags is because
+        #      they are determined by the duration from the start of the timer,
+        #      not the current value.
+        #      So even if there are 50 seconds in a timer, if the timer was
+        #      originally set to 1 minute and 30 seconds, it will show the 
+        #      minutes place as 0.
+        #      I figured I'd do this so the user can get some sort of idea
+        #      of where the timer started
         time_remaining = ''
         if self.show_hours:
             time_remaining += f'{h:0>2}'
@@ -94,14 +101,17 @@ class ProgressRing(QWidget):
         painter.setPen(circle_pen)
         self.radius = int(min(paint_event.rect().width(), paint_event.rect().height()) * 0.9 // 2)
         center = paint_event.rect().center()
+        # Keep a reference to that square that the main
+        # circle is drawn inside of so the drawProgressCircle
+        # can easily access it and draw on top of it.
         self.square = QRect(center - QPoint(self.radius, self.radius), center + QPoint(self.radius, self.radius))
         painter.drawEllipse(self.square)
 
     def drawProgressCircle(self, paint_event, painter):
         if not self.duration:
             return
-        # Since the arc angle must be specified in 1/16th of a degree
-        # I will use that as the step, the smallest fraction of time change to draw
+        # The QPainter.drawArc() method specifies the angles
+        # to 1 / 16th of a degree, that's why I multiply degrees by 16
         seconds_per_step = self.duration / (360 * 16)
 
         # This ends up drawing 1 degree for every 1 / 5760th of the duration that has passed
