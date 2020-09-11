@@ -64,12 +64,13 @@ class StandUp(QMainWindow):
         self.work_entry.setMinimum(1)
         self.work_entry.setSuffix(" minutes")
 
-        self.break_checkbox = QCheckBox("Break Intervals:")
+        #self.break_checkbox = QCheckBox("Break Intervals:")
+        self.break_checkbox = QLabel("Break Intervals:")
         self.break_entry = QSpinBox()
-        self.break_entry.setMinimum(1)
         self.break_entry.setSuffix(" minutes")
-        self.break_checkbox.stateChanged.connect(lambda x: self.break_entry.setEnabled(x))
-        self.break_checkbox.setChecked(True)
+        self.break_entry.setSpecialValueText("Wait for Input")
+        #self.break_checkbox.stateChanged.connect(lambda x: self.break_entry.setEnabled(x))
+        #self.break_checkbox.setChecked(True)
 
 
         reminder_type_label = QLabel("Reminder Type:")
@@ -121,7 +122,7 @@ class StandUp(QMainWindow):
         self.timer = ProgressRing()
         self.timer.finished.connect(self.interval_finished)
         stop_button = QPushButton("Stop Session")
-        stop_button.clicked.connect(self.stop_session)
+        stop_button.clicked.connect(self.session_complete)
 
         self.running_vbox.addWidget(self.running_label)
         self.running_vbox.addWidget(self.timer)
@@ -144,105 +145,64 @@ class StandUp(QMainWindow):
         status_text = str(self.intervals[self.interval_index % len(self.intervals):])
         self.status.showMessage(status_text)
 
-    # NOTE on the set_(in)finite_intervals methods
-    #      it is probably easier to just keep an attribute for both breaks and works
-    #      and indices for each.
-    #      You would also need to keep track of which interval is next, work or break
-    #      You would also need to keep track of the total time passed so you stop when the duration is done.
-    def set_infinite_intervals(self, works, breaks):
-        # This is so impractical it's hilarious. I'll leave it in for now.
-        # Calculate number of times you need to iterate each list until the zipped sequence repeats
-        if breaks:
-            self.intervals = []
-            lcm = (len(works) * len(breaks)) // math.gcd(len(works), len(breaks))
-            for index in range(lcm):
-                self.intervals.append(works[index])
-                self.intervals.append(breaks[index])
-        else:
-            self.intervals = works
-
-    def set_finite_intervals(self, duration, works, breaks):
-        self.intervals = []
-        index = 0
-        # If works and breaks are lists this will not work
-        # Use walrus here so you don't have to do sum(intervals) twice
-        while (current_sum := sum(self.intervals)) != duration:
-            if breaks:
-                if index % 2 == 0:
-                    next_interval = works[index // 2 % len(works)]
-                else:
-                    next_interval = breaks[index // 2 % len(breaks)]
-            else:
-                next_interval = works[index % len(works)]
-
-            if current_sum + next_interval > duration:
-                if index % 2 == 1:
-                    self.intervals[-1] += (duration - current_sum)
-                else:
-                    self.intervals.append(duration - current_sum)
-            else:
-                self.intervals.append(next_interval)
-
     def start_session(self):
         # NOTE this methods does a lot. Maybe I should refactor?
         self.reminder = self.init_reminder()
 
-        session_duration = self.duration_entry.value() * 60 * 60 # hours to seconds
-        # NOTE I make interval a list because in the future I want to change the program so
-        #      the user can enter lists of values for the intervals, and the program will cycle
-        #      through the list until the session duration passes.
-        # The user has no way to implement them yet, but my program is capable of handling them.
-        work_intervals = [(self.work_entry.value() * 60)] # minutes to seconds
-        # NOTE when I implement breaks I must be sure to include a break_intervals flag
-        #      so the reminder handler knows whether or not to account for breaks.
-        # TODO implement breaks
-        # TODO implement lists of intervals
-        self.has_break_intervals = self.break_checkbox.isChecked()
-        if self.has_break_intervals:
-            break_intervals = [(self.break_entry.value() * 60)]
-        else:
-            break_intervals = None
+        self.session_time = self.duration_entry.value() * 1 * 5 # hours to seconds
+        self.work_length = self.work_entry.value() * 1 # minutes to seconds
 
-        self.infinite = not bool(session_duration)
-        if self.infinite:
-            self.set_infinite_intervals(work_intervals, break_intervals)
-        else:
-            self.set_finite_intervals(session_duration, work_intervals, break_intervals)
-        self.interval_index = 0
+        self.break_length = self.break_entry.value() * 1
+
+        self.work_interval = True
+
         self.start_next_interval()
 
     def start_next_interval(self):
-        #self.set_status_bar() # Primaily to debug
-        self.timer.set_timer(self.intervals[self.interval_index % len(self.intervals)])
-        if self.has_break_intervals and self.interval_index % 2 == 1:
-            self.running_label.setText("Break Timer")
+        if self.work_interval:
+            # Flip the work_interval flag to False if the user has break timers set
+            self.work_interval = self.break_length == 0
+            self.running_label.setText("Focus Mode")
+            if self.session_time < self.work_length:
+                self.timer.set_timer(self.session_time)
+                self.session_time = 0
+            else:
+                self.timer.set_timer(self.work_length)
+                self.session_time -= self.work_length
         else:
-            self.running_label.setText("Work Timer")
+            self.work_interval = not self.work_interval
+            self.running_label.setText("Break Timer")
+
+            if self.session_time < self.break_length:
+                self.timer.set_timer(self.session_time)
+                self.session_time = 0
+            else:
+                self.timer.set_timer(self.break_length)
+                self.session_time -= self.break_length
+
         self.stack.setCurrentWidget(self.running_screen)
 
     def set_work_message(self):
         self.reminder_label.setText(self.work_text)
 
-    def stop_session(self):
-        self.timer.stop_timer()
+    def session_complete(self):
+        # Maybe I should make a different handler for the final reminder
+        self.reminder.handle()
         self.stack.setCurrentWidget(self.start_screen)
 
     def interval_finished(self):
-        self.interval_index += 1
-        if not self.infinite and self.interval_index >= len(self.intervals):
-            # NOTE maybe make a separate screen that tells you when you are done
-            #      or at least make it an option
-            self.reminder.handle()
-            self.stack.setCurrentWidget(self.start_screen)
-        # Must check if this session has any break intervals.
-        # If not then very interval must be a work interval, which means you call reminder.handle()
-        # If the session does have intervals, then every even interval index means you should start a
-        # break interval.
-        elif self.has_break_intervals and self.interval_index % 2 == 0:
-            self.start_next_interval()
+        if self.session_time <= 0:
+            self.session_complete()
         else:
-            self.reminder.handle()
-            self.stack.setCurrentWidget(self.reminder_screen)
+            if self.work_interval:
+                if self.break_length == 0:
+                    self.reminder.handle()
+                    self.stack.setCurrentWidget(self.reminder_screen)
+                else:
+                    self.start_next_interval()
+            else:
+                self.reminder.handle()
+                self.start_next_interval()
 
     # NOTE this method doesn't know what it's doing. Neither do I.
     def close_reminder(self):
