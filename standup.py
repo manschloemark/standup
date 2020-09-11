@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, 
 from PyQt5.QtCore import QTimer, QTime, QSettings, Qt, QBasicTimer
 
 from timerprogress import ProgressRing
+from reminders import reminder_types
 
 class StandUp(QMainWindow):
 
@@ -75,26 +76,15 @@ class StandUp(QMainWindow):
 
         reminder_type_label = QLabel("Reminder Type:")
         self.reminder_select = QComboBox()
-        self.reminder_type_options = QStackedWidget()
-        self.reminder_select.currentIndexChanged.connect(self.reminder_type_options.setCurrentIndex)
+        self.reminder_type_stack = QStackedWidget()
+        self.reminder_select.currentIndexChanged.connect(
+                self.reminder_type_stack.setCurrentIndex
+                )
 
-        # Create ReminderOptions objects for each type
-        # NOTE I will have to manually add lines here for each reminder type added
-        #      Is there a better way to do this? A way to automatically make them?
-        #      There's gotta be a way to make it so I can just add classes for new reminder types
-        #      and have the program automatically load the combo box with them
-        #        - I could give ReminderOptions class an attribute that sets the text for the combo box entry
-        self.url_options = BrowserReminderOptions()
-        self.raise_window_options = RaiseWindowReminderOptions(self.reminder_label)
-        self.maximize_window_options = MaximizeWindowReminderOptions(self.reminder_label)
-
-        self.reminder_type_options.addWidget(self.raise_window_options)
-        self.reminder_type_options.addWidget(self.maximize_window_options)
-        self.reminder_type_options.addWidget(self.url_options)
-
-        self.reminder_select.addItem("Raise StandUp Window")
-        self.reminder_select.addItem("Maximize StandUp Window")
-        self.reminder_select.addItem("Open URL")
+        for reminder_type in reminder_types:
+            reminder_options = reminder_type(self.reminder_label)
+            self.reminder_type_stack.addWidget(reminder_options)
+            self.reminder_select.addItem(reminder_options.name)
 
         # TODO add buttons - a 'Save Profile' button, a 'Set Default'
         #      and a 'Save New Profile'
@@ -113,7 +103,7 @@ class StandUp(QMainWindow):
         self.start_grid.addWidget(self.break_entry, 4, 1)
         self.start_grid.addWidget(reminder_type_label, 5, 0)
         self.start_grid.addWidget(self.reminder_select, 5, 1)
-        self.start_grid.addWidget(self.reminder_type_options, 6, 0, 2, 2)
+        self.start_grid.addWidget(self.reminder_type_stack, 6, 0, 2, 2)
         self.start_grid.addWidget(start_button, 8, 0, 1, 2, Qt.AlignCenter)
         self.start_grid.setAlignment(Qt.AlignCenter)
 
@@ -145,7 +135,7 @@ class StandUp(QMainWindow):
         pass
 
     def init_reminder(self):
-        return self.reminder_type_options.currentWidget().get_reminder()
+        return self.reminder_type_stack.currentWidget().get_reminder()
 
     def set_status_bar(self):
         status_text = str(self.intervals[self.interval_index % len(self.intervals):])
@@ -155,11 +145,11 @@ class StandUp(QMainWindow):
         # NOTE this methods does a lot. Maybe I should refactor?
         self.reminder = self.init_reminder()
 
-        self.session_time = self.duration_entry.value() * 60 * 60 # hours to seconds
+        self.session_time = self.duration_entry.value() * 1 * 2 # hours to seconds
         self.finite = bool(self.session_time) # Lame band-aid
-        self.work_length = self.work_entry.value() * 60 # minutes to seconds
+        self.work_length = self.work_entry.value() * 1 # minutes to seconds
 
-        self.break_length = self.break_entry.value() * 60
+        self.break_length = self.break_entry.value() * 1
 
         self.work_interval = True
 
@@ -198,6 +188,7 @@ class StandUp(QMainWindow):
         # Maybe I should make a different handler for the final reminder
         self.reminder.handle()
         self.stack.setCurrentWidget(self.start_screen)
+        self.timer.stop_timer()
 
     def interval_finished(self):
         if self.finite and self.session_time <= 0:
@@ -298,43 +289,43 @@ class MaximizeWindowReminderOptions(RaiseWindowReminderOptions):
         return MaximizeWindowReminder(self)
 
 
-class Reminder:
-    def __init__(self):
-        super().__init__()
-
-    def handle(self):
-        raise NotImplementedError
-
-class BrowserReminder(Reminder):
-
-    def __init__(self, url, new_tab_policy=2):
-        super().__init__()
-        self.url = url
-        self.new_tab_policy = new_tab_policy
-
-    def handle(self):
-        webbrowser.open(self.url, new=self.new_tab_policy)
-
-class RaiseWindowReminder(Reminder):
-
-    def __init__(self, parent):
-        super().__init__()
-        self.window = parent.window()
-
-    def handle(self):
-        # There is a chance this doesn't work on Windows or Mac. Or maybe even other Window Managers on Linux.
-        self.window.setWindowState(self.window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
-        self.window.activateWindow()
-
-class MaximizeWindowReminder(RaiseWindowReminder):
-
-    def __init__(self, *args):
-        super().__init__(*args)
-
-    def handle(self):
-        self.window.setWindowState(Qt.WindowMaximized)
-        self.window.activateWindow()
-
+#class Reminder:
+#    def __init__(self):
+#        super().__init__()
+#
+#    def handle(self):
+#        raise NotImplementedError
+#
+#class BrowserReminder(Reminder):
+#
+#    def __init__(self, url, new_tab_policy=2):
+#        super().__init__()
+#        self.url = url
+#        self.new_tab_policy = new_tab_policy
+#
+#    def handle(self):
+#        webbrowser.open(self.url, new=self.new_tab_policy)
+#
+#class RaiseWindowReminder(Reminder):
+#
+#    def __init__(self, parent):
+#        super().__init__()
+#        self.window = parent.window()
+#
+#    def handle(self):
+#        # There is a chance this doesn't work on Windows or Mac. Or maybe even other Window Managers on Linux.
+#        self.window.setWindowState(self.window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
+#        self.window.activateWindow()
+#
+#class MaximizeWindowReminder(RaiseWindowReminder):
+#
+#    def __init__(self, *args):
+#        super().__init__(*args)
+#
+#    def handle(self):
+#        self.window.setWindowState(Qt.WindowMaximized)
+#        self.window.activateWindow()
+#
 
 def main():
     import os
