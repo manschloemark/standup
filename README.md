@@ -38,6 +38,9 @@ Uses the webbrowser standard library module to open URL's.
 
 ## TODO
 
+- Fix RaiseWindow and MaximizeWindow reminders
+  - these reminders are supposed to display a message during the reminder
+  - when the user sets a break timer this message is not displayed
 - Implement Qt QSettings so session configurations persist after closing the program
 - Implement user profiles so users can save multiple session configurations and name them
 - Allow users to enter multiple values for the work and break intervals
