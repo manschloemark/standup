@@ -307,16 +307,18 @@ class RaiseWindowReminder(Reminder):
         self.window = parent.window()
 
     def handle(self):
+        # There is a chance this doesn't work on Windows or Mac. Or maybe even other Window Managers on Linux.
         self.window.setWindowState(self.window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
         self.window.activateWindow()
 
 
 def main():
+    import os
     import sys
     app = QApplication(sys.argv)
 
     standup = StandUp()
-    with open("standup-styles.qss") as styles:
+    with open(os.path.join(os.path.dirname(__file__), "standup-styles.qss")) as styles:
         standup.setStyleSheet(styles.read())
     standup.show()
 
