@@ -22,7 +22,8 @@ StandUp is a program that reminds you to take breaks during long work sessions a
   - If you set this to 0 the program will wait for your input to start the next work interval
 - Reminder Type    : choose how you'd like the program to tell you when to take a break
   - Open a URL: enter any URL you'd like and the program will open a new tab to that page every interval.
-  - Raise StandUp window: after every interval the StandUp window will be raised to the front of your desktop and will take focus.
+  - Raise StandUp window: after every interval the StandUp window will be raised to the front of your desktop and will take focus. Preserves size of window.
+  - Maximize StandUp window: the same as 'Raise StandUp window' but instead makes sure the window is maximized.
 
 Written in Python 3 with PyQt5.
 Uses the webbrowser standard library module to open URL's.
