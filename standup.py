@@ -149,10 +149,11 @@ class StandUp(QMainWindow):
         # NOTE this methods does a lot. Maybe I should refactor?
         self.reminder = self.init_reminder()
 
-        self.session_time = self.duration_entry.value() * 1 * 5 # hours to seconds
-        self.work_length = self.work_entry.value() * 1 # minutes to seconds
+        self.session_time = self.duration_entry.value() * 60 * 60 # hours to seconds
+        self.finite = bool(self.session_time) # Lame band-aid
+        self.work_length = self.work_entry.value() * 60 # minutes to seconds
 
-        self.break_length = self.break_entry.value() * 1
+        self.break_length = self.break_entry.value() * 60
 
         self.work_interval = True
 
@@ -163,22 +164,24 @@ class StandUp(QMainWindow):
             # Flip the work_interval flag to False if the user has break timers set
             self.work_interval = self.break_length == 0
             self.running_label.setText("Focus Mode")
-            if self.session_time < self.work_length:
+            if self.finite and self.session_time < self.work_length:
                 self.timer.set_timer(self.session_time)
                 self.session_time = 0
             else:
                 self.timer.set_timer(self.work_length)
-                self.session_time -= self.work_length
+                if self.finite:
+                    self.session_time -= self.work_length
         else:
             self.work_interval = not self.work_interval
             self.running_label.setText("Break Timer")
 
-            if self.session_time < self.break_length:
+            if self.finite and self.session_time < self.break_length:
                 self.timer.set_timer(self.session_time)
                 self.session_time = 0
             else:
                 self.timer.set_timer(self.break_length)
-                self.session_time -= self.break_length
+                if self.finite:
+                    self.session_time -= self.break_length
 
         self.stack.setCurrentWidget(self.running_screen)
 
@@ -191,7 +194,7 @@ class StandUp(QMainWindow):
         self.stack.setCurrentWidget(self.start_screen)
 
     def interval_finished(self):
-        if self.session_time <= 0:
+        if self.finite and self.session_time <= 0:
             self.session_complete()
         else:
             if self.work_interval:
