@@ -36,6 +36,8 @@ class ProgressRing(QWidget):
         self.timer_id = self.startTimer(timeout)
 
     def stop_timer(self):
+        if self.timer_id is None:
+            return
         self.killTimer(self.timer_id)
         self.timer_id = None
 
