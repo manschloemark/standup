@@ -145,11 +145,11 @@ class StandUp(QMainWindow):
         # NOTE this methods does a lot. Maybe I should refactor?
         self.reminder = self.init_reminder()
 
-        self.session_time = self.duration_entry.value() * 1 * 2 # hours to seconds
+        self.session_time = self.duration_entry.value() * 60 * 60 # hours to seconds
         self.finite = bool(self.session_time) # Lame band-aid
-        self.work_length = self.work_entry.value() * 1 # minutes to seconds
+        self.work_length = self.work_entry.value() * 60 # minutes to seconds
 
-        self.break_length = self.break_entry.value() * 1
+        self.break_length = self.break_entry.value() * 60
 
         self.work_interval = True
 
