@@ -3,7 +3,7 @@ StandUp is a program that reminds you to take breaks during long work sessions a
 
 > Being sedentary for long periods of time can cause serious health issues.
 > <br>It's important to take regular breaks to:
-> 1. Stand up, walk around, stretch
+> 1. Stand up and stretch
 > 1. Give your eyes a break from the screen
 > 1. Give your mind a break from your work
 >
@@ -16,7 +16,7 @@ StandUp is a program that reminds you to take breaks during long work sessions a
 - Session Duration : how long the program will run
   - If you set this to 0 the program will run until you stop it
 - Work Intervals   : how long you work before taking a break
-  - After a work interval ends the program will trigger the 'reminder' you set
+  - After a work interval ends the program will trigger the reminder you set
 - Break Intervals  : how long your breaks are
   - After a break interval ends the program will start the next work interval
   - If you set this to 0 the program will wait for your input to start the next work interval
@@ -44,4 +44,4 @@ Uses the webbrowser standard library module to open URL's.
 - Implement Qt QSettings so session configurations persist after closing the program
 - Implement user profiles so users can save multiple session configurations and name them
 - Allow users to enter multiple values for the work and break intervals
-  - This would allow you to create a Pomodoro timer (work 25, break 5, work 25, break 5, work 25, break 5, work 25, break 20, repeat)
+  - This would allow you to create a Pomodoro timer, for example
