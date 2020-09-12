@@ -185,13 +185,13 @@ class StandUp(QMainWindow):
         self.reminder_label.setText(self.work_text)
 
     def session_complete(self):
-        # Maybe I should make a different handler for the final reminder
-        self.reminder.handle()
         self.stack.setCurrentWidget(self.start_screen)
         self.timer.stop_timer()
 
     def interval_finished(self):
         if self.finite and self.session_time <= 0:
+            # Maybe I should make a separete reminder for the final reminder
+            self.reminder.handle()
             self.session_complete()
         else:
             if self.work_interval:
