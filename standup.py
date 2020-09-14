@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, 
 from PyQt5.QtCore import QTimer, QTime, QSettings, Qt, QBasicTimer
 
 from timerprogress import ProgressRing
-from reminders import reminder_types
+import reminders
 
 class StandUp(QMainWindow):
 
@@ -81,7 +81,7 @@ class StandUp(QMainWindow):
                 self.reminder_type_stack.setCurrentIndex
                 )
 
-        for reminder_type in reminder_types:
+        for reminder_type in reminders.get_reminder_options():
             reminder_options = reminder_type(self.reminder_label)
             self.reminder_type_stack.addWidget(reminder_options)
             self.reminder_select.addItem(reminder_options.name)

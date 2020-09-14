@@ -117,7 +117,7 @@ class RaiseWindowReminderOptions(ReminderOptions):
         self.set_reminder_text()
         return RaiseWindowReminder(self)
 
-class MaximizeWindowReminderOptions(RaiseWindowReminderOptions):
+class MaximizeWindowReminderOptions(RaiseWindowReminderOptions, ReminderOptions):
 
     name = "Maximize StandUp Window"
 
@@ -167,6 +167,10 @@ class MaximizeWindowReminder(RaiseWindowReminder):
         self.window.setWindowState(Qt.WindowMaximized)
         self.window.activateWindow()
 
+def get_reminder_options():
+    return ReminderOptions.__subclasses__()
+
+
 
 # NOTE this tuple is meant to be used by standup.py to programatically
 #      load all reminder types into the UI
@@ -174,4 +178,3 @@ class MaximizeWindowReminder(RaiseWindowReminder):
 #      tuple, you don't need to change any code in standup.py
 # TODO learn more about reflection, I think that is something people
 #      do in situations like these
-reminder_types = (RaiseWindowReminderOptions, MaximizeWindowReminderOptions, BrowserReminderOptions)
