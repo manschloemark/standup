@@ -3,7 +3,7 @@
     with a round progress bar
 """
 from PyQt5.QtWidgets import QProgressBar, QWidget, QApplication, QSizePolicy
-from PyQt5.QtGui import QPainter, QColor, QFont, QPen
+from PyQt5.QtGui import QPainter, QColor, QFont, QPen, QGuiApplication, QPalette
 from PyQt5.QtCore import Qt, pyqtSignal, QRect, QPoint
 
 import math
@@ -19,6 +19,7 @@ class ProgressRing(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.palette = QGuiApplication.palette()
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.radius = 0
         self.timer_id = None
@@ -97,8 +98,9 @@ class ProgressRing(QWidget):
         qp.end()
 
     def drawMainCircle(self, paint_event, painter):
-        circle_pen = QPen(QColor(0, 0, 0))
+        circle_pen = QPen(self.palette.color(QPalette.Active, QPalette.Midlight))
         circle_pen.setWidth(8)
+        painter.setBrush(self.palette.brush(QPalette.Active, QPalette.Mid))
         painter.setPen(circle_pen)
         self.radius = int(min(paint_event.rect().width(), paint_event.rect().height()) * 0.9 // 2)
         center = paint_event.rect().center()
@@ -111,10 +113,11 @@ class ProgressRing(QWidget):
     def drawProgressCircle(self, paint_event, painter):
         if not self.duration:
             return
-        progress_circle_pen = QPen(QColor(0, 100, 50))
-        progress_circle_pen.setWidth(12)
-        progress_circle_pen.setCapStyle(Qt.RoundCap)
-        painter.setPen(progress_circle_pen)
+        progress_pen = QPen(self.palette.color(QPalette.Active, QPalette.Link))
+        progress_pen.setWidth(12)
+        progress_pen.setCapStyle(Qt.RoundCap)
+        painter.setPen(progress_pen)
+        painter.setBrush(self.palette.brush(QPalette.Active, QPalette.Button))
 
         if self.value == 0:
             painter.drawEllipse(self.square)
@@ -126,14 +129,12 @@ class ProgressRing(QWidget):
         # This ends up drawing 1 degree for every 1 / 5760th of the duration that has passed
         # I feel like there is a better way to do this.
         angle_span = -1 * abs(int((360 * 16) - (self.value / seconds_per_step)))
-
         start_angle = (90 * 16) # Start at the top of the circle
-
         painter.drawArc(self.square, start_angle, angle_span)
 
-
     def drawText(self, paint_event, painter):
-        painter.setPen(QColor(0, 0, 0))
+        painter.setPen(QPen(self.palette.color(QPalette.Active, QPalette.WindowText)))
+        painter.setBrush(self.palette.brush(QPalette.Active, QPalette.WindowText))
         timer_font = QApplication.instance().font()
         timer_font.setPointSize(self.radius // self.font_div)
         painter.setFont(timer_font)
