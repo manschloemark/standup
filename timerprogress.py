@@ -92,6 +92,7 @@ class ProgressRing(QWidget):
     def paintEvent(self, paint_event):
         qp = QPainter()
         qp.begin(self)
+        qp.setRenderHints(QPainter.HighQualityAntialiasing)
         self.drawMainCircle(paint_event, qp)
         self.drawProgressCircle(paint_event, qp)
         self.drawText(paint_event, qp)
