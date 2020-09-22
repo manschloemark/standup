@@ -135,7 +135,7 @@ class ProgressRing(QWidget):
     def drawText(self, paint_event, painter):
         painter.setPen(QPen(self.palette.color(QPalette.Active, QPalette.WindowText)))
         painter.setBrush(self.palette.brush(QPalette.Active, QPalette.WindowText))
-        timer_font = QFont("")
+        timer_font = QFont("Noto Mono")
         timer_font.setStyleHint(QFont.Monospace)
         timer_font.setPointSize(self.radius // self.font_div)
         painter.setFont(timer_font)
