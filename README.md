@@ -1,10 +1,10 @@
 # Stand Up
 Remind your future self to stand up every once in a while.
 
-Stand Up is a desktop application that helps you manage work sessions with focus and break intervals.  
-Set custom reminders that tell you when to take a break.  
-These reminders are meant to draw your attention away from your work and remind you to take breaks.
-It might sound odd that you're trying to break your focus but taking breaks can be more productive and healthy in the long run.
+Stand Up is a desktop application that helps you get the most out of your work sessions.
+It lets you set up intervals to work and take breaks and customize reminders that tell you when it's time to swtich.
+These reminders are meant to draw your attention away from your work long enough to realize it's a good idea to take a break.
+It might sound odd that you're trying to break your focus, but taking breaks can be more productive and healthy in the long run.
 
 It's important to take breaks regularly and:
  1. stretch your body
@@ -12,6 +12,7 @@ It's important to take breaks regularly and:
  1. clear your head
 
 Despite knowing all this, I struggle to actually implement it in my routine.  
+Some days it's hard to focus for long periods of time.  
 Sometimes it's hard to pull yourself away from an interesting or difficult problem.  
 I've tried using regular alarms but I tend to filter them out after a while. I just shut off the alarm without breaking my focus.  
 
