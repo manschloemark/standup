@@ -49,9 +49,9 @@ Open the directory and run standup.py:
   - Maximize StandUp window: the same as 'Raise StandUp window' but instead makes sure the window is maximized.
 
 ### That's it!
-Stand Up makes it easy to remember by providing unconventional reminder mechanisms.  
 
 ## TODO
+- Make it easy to install and run
 - Fix RaiseWindow and MaximizeWindow reminders
   - these reminders are supposed to display a message during the reminder
   - when the user sets a break timer this message is not displayed
