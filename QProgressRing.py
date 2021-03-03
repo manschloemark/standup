@@ -91,12 +91,20 @@ class QProgressRing(QtWidgets.QWidget):
         return round(((self.progress() / self.range()) * 100), 1)
 
     def getFormattedText(self):
+        if self._value == self._maximum: # NOTE Might remove the completion string and let that be handled by the code that uses this
+            return 'Done!'
         if self._format == '%':
             return f'{self.percentComplete()}%'
         elif self._format == 'countdown':
             m, s = divmod(self.remaining(), 60)
             h, m = divmod(m, 60)
-            return f'{h:0>2}:{m:0>2}:{s:0>2}'
+            if h:
+                time_string = f'{h:0>2}h {m:0>2}m {s:0>2}s'
+            elif m:
+                time_string = f'{m:0>2}m {s:0>2}s'
+            else:
+                time_string = f'{s:0>2}s'
+            return time_string
 
     def calcSquare(self, center):
         self._square = QtCore.QRect(center -
@@ -178,7 +186,7 @@ if __name__ == "__main__":
     ring = QProgressRing()
     ring.setFormat("countdown")
     ring.setMinimum(0)
-    ring.setMaximum(3600)
+    ring.setMaximum(10)
     ring.setValue(0)
     button = QtWidgets.QPushButton("Add a number")
     button.clicked.connect(lambda x: ring.setValue(ring.value() + 1))
