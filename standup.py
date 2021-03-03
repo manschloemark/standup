@@ -22,7 +22,7 @@ class SessionQueue():
         self.is_break = True
 
     # NOTE I don't like this.
-    def next_interval(self):
+    def get_next_interval(self):
         self.is_break = not self.is_break
         interval_length = None
         if self.is_break:
@@ -47,6 +47,7 @@ class SessionOptions(qw.QWidget):
     def init_ui(self):
         self.layout = qw.QGridLayout(self)
 
+        # TODO customize SpinBoxes so they work nicely for time
         self.session_dur_label = qw.QLabel("Session Length:")
         self.session_duration = qw.QSpinBox()
         self.focus_dur_label = qw.QLabel("Focus Interval Length:")
@@ -109,6 +110,13 @@ class StandUpWindow(qw.QMainWindow):
 
 
         # Set up timer screen
+        self.timer_widget = QProgressRing()
+
+        # TODO gonna have some slot / signal to handle timer finish
+        # TODO gonna need controls to cancel / pause timers, I suppose.
+        # TODO but maybe those should be in the timer widgets?
+        self.timer_layout.addWidget(self.timer_widget)
+
 
         self.screen_stack.addWidget(self.start_screen)
         self.screen_stack.addWidget(self.timer_screen)
@@ -116,10 +124,24 @@ class StandUpWindow(qw.QMainWindow):
 
         self.setCentralWidget(self.screen_stack)
 
+    def start_timer(self, is_break, duration):
+        if is_break:
+            self.setWindowTitle(self.window_title + "- Break")
+        else:
+            self.setWindowTitle(self.window_title + "- Focus")
+
+        self.stack.setCurrentWidget(self.timer_screen)
+        self.timer_widget.start_timer(duration)
+
+    def start_next_interval(self):
+        self.is_break, self.interval_duration = self.session_queue.get_next_interval()
+        self.start_timer(self.is_break, self.interval_duration)
+
     @QtCore.Slot()
     def start_session(self):
         self.session_queue = self.session_options.get_session_queue()
         print(self.session_queue)
+
 
 
 
