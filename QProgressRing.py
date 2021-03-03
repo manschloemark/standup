@@ -38,7 +38,7 @@ class QProgressRing(QtWidgets.QWidget):
         self._clockwise = True
         self._format = '%' # I'm not sure how to implement a cool formatter yet
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
         self.calcRadius(self.rect().size())
         self.calcSquare(self.rect().center())
 
@@ -50,6 +50,7 @@ class QProgressRing(QtWidgets.QWidget):
 
     def setValue(self, value):
         self._value = value
+        self.update()
         if self._value == self._maximum:
             self.complete.emit()
 
@@ -76,6 +77,26 @@ class QProgressRing(QtWidgets.QWidget):
 
     def maximum(self):
         return self._maximum
+
+    def progress(self):
+        return self._value - self._minimum
+
+    def remaining(self):
+        return self._maximum - self._value
+
+    def range(self):
+        return self._maximum - self._value
+
+    def percentComplete(self):
+        return round(((self.progress() / self.range()) * 100), 1)
+
+    def getFormattedText(self):
+        if self._format == '%':
+            return f'{self.percentComplete()}%'
+        elif self._format == 'countdown':
+            m, s = divmod(self.remaining(), 60)
+            h, m = divmod(m, 60)
+            return f'{h:0>2}:{m:0>2}:{s:0>2}'
 
     def calcSquare(self, center):
         self._square = QtCore.QRect(center -
@@ -117,10 +138,17 @@ class QProgressRing(QtWidgets.QWidget):
                 arc_span *= -1
             qp.drawArc(self._square, self._ARC_OFFSET, arc_span)
 
-
-
     def drawText(self, qp):
-        pass
+        qp.setPen(QtGui.QPen(self._palette.color(QtGui.QPalette.Active, QtGui.QPalette.WindowText)))
+
+        qp.setBrush(self._palette.brush(QtGui.QPalette.Active, QtGui.QPalette.WindowText))
+
+        timer_font = QtGui.QFont('monospace') # Change this to not be hardcoded?
+        timer_font.setStyleHint(QtGui.QFont.Monospace)
+        timer_font.setPointSize(12) # TODO make this not hardcoded, maybe?
+
+        qp.setFont(timer_font)
+        qp.drawText(self._square, QtCore.Qt.AlignCenter, self.getFormattedText())
 
     def render(self):
         qp = QtGui.QPainter()
@@ -148,8 +176,9 @@ if __name__ == "__main__":
     ex = QtWidgets.QWidget()
     l = QtWidgets.QVBoxLayout(ex)
     ring = QProgressRing()
+    ring.setFormat("countdown")
     ring.setMinimum(0)
-    ring.setMaximum(10)
+    ring.setMaximum(3600)
     ring.setValue(0)
     button = QtWidgets.QPushButton("Add a number")
     button.clicked.connect(lambda x: ring.setValue(ring.value() + 1))
