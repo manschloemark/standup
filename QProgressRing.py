@@ -1,0 +1,161 @@
+"""
+    Mark Schloeman
+
+    Custom PyQt6 QWidget that functions like a QProgressBar
+    that draws a circle instead of a bar.
+
+    I might rename this to something like 'QCountdownWidget'
+    if I can't think of a way to generalize the API enough to make
+    it work with both % and time.
+    Maybe I can check the QProgressBar API to see if it's possible
+"""
+
+import math
+from PySide6 import QtGui, QtCore, QtWidgets
+
+
+class QProgressRing(QtWidgets.QWidget):
+    _TOTAL_DEGREES = 360 * 16 # I'm not satisfied with this name
+                              # but this variable exists because
+                              # QtGui.QPainter.drawArc can draw
+                              # to 1/16 degrees
+                              # Meaning there are 360 * 16 possible values
+
+    _ARC_OFFSET = 90 * 16     # This variable is used to offset the arc
+                              # since I want the progress ring
+                              # to start that the 12 o'clock position (90deg)
+                              # TODO maybe make this something easily
+                              # adjustable
+    ### Signals ###
+    complete = QtCore.Signal()
+
+    def __init__(self):
+        super().__init__()
+        self._palette = QtGui.QGuiApplication.palette()
+        self._minimum = 0
+        self._maximum = 0
+        self._value = 0
+        self._clockwise = True
+        self._format = '%' # I'm not sure how to implement a cool formatter yet
+
+        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
+        self.calcRadius(self.rect().size())
+        self.calcSquare(self.rect().center())
+
+        # DEBUG
+        self._rendering = False
+
+    def setRadius(self, radius):
+        self._radius = radius
+
+    def setValue(self, value):
+        self._value = value
+        if self._value == self._maximum:
+            self.complete.emit()
+
+    def setMinimum(self, minimum):
+        self._minimum = minimum
+
+    def setMaximum(self, maximum):
+        self._maximum = maximum
+
+    def setFormat(self, fmt):
+        self._format = fmt
+
+    def radius(self):
+        return self._radius
+
+    def circumference(self):
+        return 2 * math.pi * self._radius
+
+    def value(self):
+        return self._value
+
+    def minimum(self):
+        return self._minimum
+
+    def maximum(self):
+        return self._maximum
+
+    def calcSquare(self, center):
+        self._square = QtCore.QRect(center -
+                                   QtCore.QPoint(self._radius, self._radius),
+                                   center +
+                                   QtCore.QPoint( self._radius, self._radius))
+
+    def calcRadius(self, size):
+        new_radius = min(size.width(), size.height())
+        self._radius = int((new_radius * 0.4))
+
+    def drawOutline(self, qp):
+        circle_pen = QtGui.QPen(self._palette.color(QtGui.QPalette.Active,
+                                                    QtGui.QPalette.Midlight))
+        circle_pen.setWidth(8)
+
+        qp.setBrush(self._palette.brush(QtGui.QPalette.Active, QtGui.QPalette.Mid))
+        qp.setPen(circle_pen)
+
+        qp.drawEllipse(self._square)
+
+    def drawProgressArc(self, qp):
+        if not self._maximum:
+            return
+
+        progress_pen = QtGui.QPen(self._palette.color(QtGui.QPalette.Active, QtGui.QPalette.Link))
+
+        progress_pen.setWidth(12)
+        progress_pen.setCapStyle(QtCore.Qt.RoundCap)
+
+        qp.setPen(progress_pen)
+        qp.setBrush(self._palette.brush(QtGui.QPalette.Active, QtGui.QPalette.Button))
+        if self._value == self._maximum:
+            qp.drawEllipse(self._square)
+        else:
+            percent_complete = (self._value - self._minimum) / (self._maximum - self._minimum)
+            arc_span = (self._TOTAL_DEGREES) * percent_complete
+            if self._clockwise:
+                arc_span *= -1
+            qp.drawArc(self._square, self._ARC_OFFSET, arc_span)
+
+
+
+    def drawText(self, qp):
+        pass
+
+    def render(self):
+        qp = QtGui.QPainter()
+        qp.begin(self)
+        qp.setRenderHints(qp.Antialiasing)
+        self.drawOutline(qp)
+        self.drawProgressArc(qp)
+        self.drawText(qp)
+        qp.end()
+
+    def paintEvent(self, paint_event):
+        super().paintEvent(paint_event)
+        self.render()
+
+    def resizeEvent(self, resize_event):
+        super().resizeEvent(resize_event)
+        self.calcRadius(resize_event.size())
+        self.calcSquare(self.rect().center())
+
+# Testing
+if __name__ == "__main__":
+    import sys
+    import time
+    app = QtWidgets.QApplication([])
+    ex = QtWidgets.QWidget()
+    l = QtWidgets.QVBoxLayout(ex)
+    ring = QProgressRing()
+    ring.setMinimum(0)
+    ring.setMaximum(10)
+    ring.setValue(0)
+    button = QtWidgets.QPushButton("Add a number")
+    button.clicked.connect(lambda x: ring.setValue(ring.value() + 1))
+
+    l.addWidget(ring)
+    l.addWidget(button)
+    ring.show()
+    ex.show()
+    sys.exit(app.exec_())
