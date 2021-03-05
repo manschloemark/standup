@@ -9,6 +9,7 @@ from PySide6 import QtWidgets as qw
 from PySide6 import QtCore
 
 from QProgressRing import QProgressRing
+import reminders
 
 class SessionQueue():
     """
@@ -75,6 +76,37 @@ class SessionOptions(qw.QWidget):
                                      break_interval)
 
         return session_queue
+
+class ReminderOptionContainer(qw.QWidget):
+    def __init__(self, option_dict):
+        super().__init__()
+        self.option_dict = option_dict
+        self.initUI()
+
+    def initUI(self):
+        self.layout = qw.QVBoxLayout(self)
+        self.reminder_instruction = qw.QLabel("Reminder Type",
+                                              alignment=QtCore.Qt.AlignCenter)
+        self.reminder_select = qw.QComboBox()
+        self.reminder_select.currentTextChanged.connect(self.reminderSelected)
+        self.reminder_options = None
+
+        self.layout.addWidget(self.reminder_instruction)
+        self.layout.addWidget(self.reminder_select)
+
+        for reminder_type in reminders.reminder_option_dict.keys():
+            self.reminder_select.addItem(reminder_type)
+
+
+    def reminderSelected(self, reminder_name):
+        if self.reminder_options:
+            self.reminder_options.deleteLater()
+        self.reminder_options = reminders.reminder_option_dict[reminder_name]()
+        self.layout.addWidget(self.reminder_options)
+
+    def getReminder(self):
+        reminder = self.reminder_options.getReminder()
+        return reminder
 
 
 class TimerWidget(qw.QWidget):
@@ -177,7 +209,6 @@ class StandUpWindow(qw.QMainWindow):
 
         self.timer_screen = qw.QWidget()
         self.timer_layout = qw.QVBoxLayout(self.timer_screen)
-        # TODO add options screen?
 
         # Set up start screen
         self.title = qw.QLabel('Stand Up',
@@ -188,13 +219,7 @@ class StandUpWindow(qw.QMainWindow):
 
         self.session_options = SessionOptions()
 
-        self.reminder_instruction = qw.QLabel("Reminder Type", alignment=QtCore.Qt.AlignCenter)
-
-        self.reminder_select = qw.QComboBox()
-
-        # TODO: add for-loop that loads each reminder type from reminders.py as options
-
-        self.reminder_options_container = None # TODO: make some reminder type default
+        self.reminder_options = ReminderOptionContainer(reminders.reminder_option_dict)
 
         self.start_session_button = qw.QPushButton("Start Session")
         self.start_session_button.clicked.connect(self.start_session)
@@ -202,10 +227,10 @@ class StandUpWindow(qw.QMainWindow):
         self.start_layout.addWidget(self.title)
         self.start_layout.addWidget(self.session_instruction)
         self.start_layout.addWidget(self.session_options)
-        self.start_layout.addWidget(self.reminder_instruction)
-        self.start_layout.addWidget(self.reminder_options_container)
+        self.start_layout.addWidget(self.reminder_options)
         self.start_layout.addWidget(self.start_session_button)
-
+        # Load reminder types after setting layout so
+        # the reminderSelectedMethod works properly
 
         # Set up timer screen
         self.timer_widget = TimerWidget()
@@ -222,6 +247,7 @@ class StandUpWindow(qw.QMainWindow):
 
 
         self.setCentralWidget(self.screen_stack)
+
 
     def start_next_interval(self):
         self.is_break, self.interval_duration = self.session_queue.get_next_interval()
@@ -247,7 +273,8 @@ class StandUpWindow(qw.QMainWindow):
     def start_session(self):
         self.session_queue = self.session_options.get_session_queue()
         print(self.session_queue)
-
+        self.reminder = self.reminder_options.getReminder()
+        print(self.reminder)
         self.start_next_interval()
 
 
