@@ -50,6 +50,7 @@ class SessionOptions(qw.QWidget):
         self.layout = qw.QGridLayout(self)
 
         # TODO customize SpinBoxes so they work nicely for time
+        # The units for these SpinBoxes is minutes but the timer uses seconds
         self.session_dur_label = qw.QLabel("Session Length:")
         self.session_duration = qw.QSpinBox()
         self.focus_dur_label = qw.QLabel("Focus Interval Length:")
@@ -66,9 +67,9 @@ class SessionOptions(qw.QWidget):
         self.layout.addWidget(self.break_duration)
 
     def get_session_queue(self):
-        session_duration = self.session_duration.value()
-        focus_interval = self.focus_duration.value()
-        break_interval = self.break_duration.value()
+        session_duration = self.session_duration.value() * 60
+        focus_interval = self.focus_duration.value() * 60
+        break_interval = self.break_duration.value() * 60
         session_queue = SessionQueue(session_duration,
                                      focus_interval,
                                      break_interval)
@@ -82,7 +83,7 @@ class TimerWidget(qw.QWidget):
         Uses a QProgressRing
     """
 
-    stopped = QtCore.signal()
+    done = QtCore.Signal(bool) # Bool tells if timer was cancelled (False) or run to completion (True)
 
     def __init__(self):
         super().__init__()
@@ -91,42 +92,68 @@ class TimerWidget(qw.QWidget):
 
         self._timer_interval = 1000
 
-        self.init_ui()
+        self.initUI()
 
-    def init_ui(self):
+    def initUI(self):
         self.layout = qw.QVBoxLayout(self)
 
         self.progress_ring = QProgressRing()
+        self.progress_ring.setMinimum(0)
         self.progress_ring.setFormat("countdown")
 
-        self.pause_toggle = QPushButton("Pause")
-        self.pause_toggle.clicked.connect(self.togglePause)
-        self.stop_button = QPushButton("Stop")
+        self.progress_ring.complete.connect(self.timerFinished)
+
+        self.control_container = qw.QHBoxLayout()
+        # Stop button cancels the timer and emits 'False'
+        self.stop_button = qw.QPushButton("Stop")
         self.stop_button.clicked.connect(self.stopTimer)
 
+        self.pause_toggle = qw.QPushButton("Unpause")
+        self.pause_toggle.clicked.connect(self.togglePause)
+
+        # Finish button stops the timer and emits 'True'
+        self.finish_button = qw.QPushButton("Finish")
+        self.finish_button.clicked.connect(self.timerFinished)
+
+        self.control_container.addWidget(self.stop_button)
+        self.control_container.addWidget(self.pause_toggle)
+        self.control_container.addWidget(self.finish_button)
+
         self.layout.addWidget(self.progress_ring)
+        self.layout.addLayout(self.control_container)
+
 
     def startTimer(self):
         if self.timer_id is None:
             self.timer_id = super().startTimer(self._timer_interval)
             self.paused = False
+            self.pause_toggle.setText("Pause")
 
     def killTimer(self, timer_id):
         if timer_id is not None:
             super().killTimer(timer_id)
             self.timer_id = None
+            self.paused = True
+            self.pause_toggle.setText("Unpause")
 
     def togglePause(self):
         if self.paused:
-            self.pause_button.setText("Pause")
             self.startTimer()
         else:
-            self.pause_button.setText("Unpause")
-            self.stopTimer(self.timer_id)
+            self.killTimer(self.timer_id)
 
-    def stopTimer(self):
-        self.stopTimer(self.timer_id)
-        self.stopped.emit()
+    def stopTimer(self, _):
+        self.killTimer(self.timer_id)
+        self.done.emit(False)
+
+    def timerFinished(self):
+        self.killTimer(self.timer_id)
+        self.done.emit(True)
+
+    def startNewCountdown(self, duration):
+        self.progress_ring.setMaximum(duration)
+        self.progress_ring.setValue(0)
+        self.startTimer()
 
     def timerEvent(self, timer_event):
         if self.timer_id == timer_event.timerId():
@@ -161,17 +188,28 @@ class StandUpWindow(qw.QMainWindow):
 
         self.session_options = SessionOptions()
 
+        self.reminder_instruction = qw.QLabel("Reminder Type", alignment=QtCore.Qt.AlignCenter)
+
+        self.reminder_select = qw.QComboBox()
+
+        # TODO: add for-loop that loads each reminder type from reminders.py as options
+
+        self.reminder_options_container = None # TODO: make some reminder type default
+
         self.start_session_button = qw.QPushButton("Start Session")
         self.start_session_button.clicked.connect(self.start_session)
 
         self.start_layout.addWidget(self.title)
         self.start_layout.addWidget(self.session_instruction)
         self.start_layout.addWidget(self.session_options)
+        self.start_layout.addWidget(self.reminder_instruction)
+        self.start_layout.addWidget(self.reminder_options_container)
         self.start_layout.addWidget(self.start_session_button)
 
 
         # Set up timer screen
         self.timer_widget = TimerWidget()
+        self.timer_widget.done.connect(self.interval_ended)
 
         # TODO gonna have some slot / signal to handle timer finish
         # TODO gonna need controls to cancel / pause timers, I suppose.
@@ -185,19 +223,25 @@ class StandUpWindow(qw.QMainWindow):
 
         self.setCentralWidget(self.screen_stack)
 
-    def start_timer(self, is_break, duration):
-        # NOTE maybe move this somewhere else because it makes this method kind of ugly.
-        if is_break:
-            self.setWindowTitle(self.window_title + "- Break")
-        else:
-            self.setWindowTitle(self.window_title + "- Focus")
-
-        self.screen_stack.setCurrentWidget(self.timer_screen)
-        self.timer_widget.start_timer(duration)
-
     def start_next_interval(self):
         self.is_break, self.interval_duration = self.session_queue.get_next_interval()
-        self.start_timer(self.is_break, self.interval_duration)
+
+        if self.is_break:
+            self.setWindowTitle(self.window_title + " - Break")
+        else:
+            self.setWindowTitle(self.window_title + " - Focus")
+
+        self.screen_stack.setCurrentWidget(self.timer_screen)
+        self.timer_widget.startNewCountdown(self.interval_duration)
+
+    def interval_ended(self, trigger_reminder):
+        if trigger_reminder:
+            # Do reminder stuff
+            print("Reached end of interval")
+        else:
+            #TODO Interval was cancelled, what do?
+            print("Interval was cancelled")
+            self.screen_stack.setCurrentWidget(self.start_screen)
 
     @QtCore.Slot()
     def start_session(self):
@@ -211,6 +255,8 @@ class StandUpWindow(qw.QMainWindow):
 
 def main():
     app = qw.QApplication([])
+    #w = TimerWidget()
+    #w.show()
     standup = StandUpWindow()
     standup.show()
     sys.exit(app.exec_())
