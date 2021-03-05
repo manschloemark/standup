@@ -262,19 +262,16 @@ class StandUpWindow(qw.QMainWindow):
 
     def interval_ended(self, trigger_reminder):
         if trigger_reminder:
-            # Do reminder stuff
-            print("Reached end of interval")
+            self.reminder.handle()
+            # TODO add new screen for after intervals
         else:
             #TODO Interval was cancelled, what do?
-            print("Interval was cancelled")
             self.screen_stack.setCurrentWidget(self.start_screen)
 
     @QtCore.Slot()
     def start_session(self):
         self.session_queue = self.session_options.get_session_queue()
-        print(self.session_queue)
         self.reminder = self.reminder_options.getReminder()
-        print(self.reminder)
         self.start_next_interval()
 
 
