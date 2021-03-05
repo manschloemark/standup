@@ -1,0 +1,2 @@
+QLabel[font-class=heading] { font-size: 28px; text-align: center;}
+QLabel[font-class=title] { font-size: 32px; text-align:center; }
