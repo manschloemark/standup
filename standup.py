@@ -8,6 +8,8 @@ import sys
 from PySide6 import QtWidgets as qw
 from PySide6 import QtCore
 
+from QProgressRing import QProgressRing
+
 class SessionQueue():
     """
         Class meant to abstract the work of determining when a session is over
@@ -74,10 +76,69 @@ class SessionOptions(qw.QWidget):
         return session_queue
 
 
+class TimerWidget(qw.QWidget):
+    """
+        Class that handles all timer events
+        Uses a QProgressRing
+    """
+
+    stopped = QtCore.signal()
+
+    def __init__(self):
+        super().__init__()
+        self.timer_id = None
+        self.paused = True
+
+        self._timer_interval = 1000
+
+        self.init_ui()
+
+    def init_ui(self):
+        self.layout = qw.QVBoxLayout(self)
+
+        self.progress_ring = QProgressRing()
+        self.progress_ring.setFormat("countdown")
+
+        self.pause_toggle = QPushButton("Pause")
+        self.pause_toggle.clicked.connect(self.togglePause)
+        self.stop_button = QPushButton("Stop")
+        self.stop_button.clicked.connect(self.stopTimer)
+
+        self.layout.addWidget(self.progress_ring)
+
+    def startTimer(self):
+        if self.timer_id is None:
+            self.timer_id = super().startTimer(self._timer_interval)
+            self.paused = False
+
+    def killTimer(self, timer_id):
+        if timer_id is not None:
+            super().killTimer(timer_id)
+            self.timer_id = None
+
+    def togglePause(self):
+        if self.paused:
+            self.pause_button.setText("Pause")
+            self.startTimer()
+        else:
+            self.pause_button.setText("Unpause")
+            self.stopTimer(self.timer_id)
+
+    def stopTimer(self):
+        self.stopTimer(self.timer_id)
+        self.stopped.emit()
+
+    def timerEvent(self, timer_event):
+        if self.timer_id == timer_event.timerId():
+            self.progress_ring.setValue(self.progress_ring.value() + 1)
+
+
 
 class StandUpWindow(qw.QMainWindow):
     def __init__(self):
         super().__init__()
+
+        self.window_title = "Stand Up"
 
         self.init_ui()
 
@@ -110,7 +171,7 @@ class StandUpWindow(qw.QMainWindow):
 
 
         # Set up timer screen
-        self.timer_widget = QProgressRing()
+        self.timer_widget = TimerWidget()
 
         # TODO gonna have some slot / signal to handle timer finish
         # TODO gonna need controls to cancel / pause timers, I suppose.
@@ -125,12 +186,13 @@ class StandUpWindow(qw.QMainWindow):
         self.setCentralWidget(self.screen_stack)
 
     def start_timer(self, is_break, duration):
+        # NOTE maybe move this somewhere else because it makes this method kind of ugly.
         if is_break:
             self.setWindowTitle(self.window_title + "- Break")
         else:
             self.setWindowTitle(self.window_title + "- Focus")
 
-        self.stack.setCurrentWidget(self.timer_screen)
+        self.screen_stack.setCurrentWidget(self.timer_screen)
         self.timer_widget.start_timer(duration)
 
     def start_next_interval(self):
@@ -141,6 +203,8 @@ class StandUpWindow(qw.QMainWindow):
     def start_session(self):
         self.session_queue = self.session_options.get_session_queue()
         print(self.session_queue)
+
+        self.start_next_interval()
 
 
 
