@@ -11,6 +11,8 @@ from PySide6 import QtCore
 from QProgressRing import QProgressRing
 import reminders
 
+# NOTE this doesn't really need to be a class.
+#      Instead I can make a function that returns a deque or queue
 class SessionQueue():
     """
         Class meant to abstract the work of determining when a session is over
@@ -26,6 +28,7 @@ class SessionQueue():
 
     # NOTE I don't like this.
     def get_next_interval(self):
+        print(self.session_remaining)
         if self.session_remaining <= 0:
             return None, None
         self.is_break = not self.is_break
@@ -37,6 +40,7 @@ class SessionQueue():
 
         self.session_remaining -= interval_length
 
+        print(self.session_remaining, interval_length)
         return self.is_break, interval_length
 
     def __repr__(self):
@@ -58,18 +62,45 @@ class SessionOptions(qw.QWidget):
         # The units for these SpinBoxes is minutes but the timer uses seconds
         self.session_dur_label = qw.QLabel("Session Length:")
         self.session_duration = qw.QSpinBox()
+
+        # TODO add controls that let the user make a queue out of these
+        self.interval_options_container = qw.QWidget()
+        self.interval_options_hbox = qw.QHBoxLayout(self.interval_options_container)
+
+        self.focus_interval_vbox = qw.QVBoxLayout()
         self.focus_dur_label = qw.QLabel("Focus Interval Length:")
         self.focus_duration = qw.QSpinBox()
+        self.focus_reminder_label = qw.QLabel("Post-Focus Reminder")
+        self.focus_reminder_options = ReminderOptionContainer(reminders.reminder_option_dict)
+
+        self.focus_interval_vbox.addWidget(self.focus_dur_label)
+        self.focus_interval_vbox.addWidget(self.focus_duration)
+        self.focus_interval_vbox.addWidget(self.focus_reminder_label)
+        self.focus_interval_vbox.addWidget(self.focus_reminder_options)
+
+        self.break_interval_vbox = qw.QVBoxLayout()
         self.break_dur_label = qw.QLabel("Break Interval Length:")
         self.break_duration = qw.QSpinBox()
-        # TODO add controls that let the user make a queue out of these
+        self.break_reminder_label = qw.QLabel("Post-Break Reminder")
+        self.break_reminder_options = ReminderOptionContainer(reminders.reminder_option_dict)
+
+        self.break_interval_vbox.addWidget(self.break_dur_label)
+        self.break_interval_vbox.addWidget(self.break_duration)
+        self.break_interval_vbox.addWidget(self.break_reminder_label)
+        self.break_interval_vbox.addWidget(self.break_reminder_options)
+
+        self.interval_options_hbox.addLayout(self.focus_interval_vbox, stretch=1)
+        self.interval_options_hbox.addLayout(self.break_interval_vbox, stretch=1)
 
         self.layout.addWidget(self.session_dur_label)
         self.layout.addWidget(self.session_duration)
-        self.layout.addWidget(self.focus_dur_label)
-        self.layout.addWidget(self.focus_duration)
-        self.layout.addWidget(self.break_dur_label)
-        self.layout.addWidget(self.break_duration)
+        self.layout.addWidget(self.interval_options_container)
+
+        #self.layout.addWidget(self.focus_dur_label)
+        #self.layout.addWidget(self.focus_duration)
+
+        #self.layout.addWidget(self.break_dur_label)
+        #self.layout.addWidget(self.break_duration)
 
     def get_session_queue(self):
         session_duration = self.session_duration.value() * 60
@@ -81,6 +112,12 @@ class SessionOptions(qw.QWidget):
 
         return session_queue
 
+    def get_focus_reminder(self):
+        return self.focus_reminder_options.getReminder()
+
+    def get_break_reminder(self):
+        return self.break_reminder_options.getReminder()
+
 class ReminderOptionContainer(qw.QWidget):
     def __init__(self, option_dict):
         super().__init__()
@@ -89,14 +126,14 @@ class ReminderOptionContainer(qw.QWidget):
 
     def initUI(self):
         self.layout = qw.QVBoxLayout(self)
-        self.reminder_instruction = qw.QLabel("Reminder Type",
-                                              alignment=QtCore.Qt.AlignCenter)
+        #self.reminder_instruction = qw.QLabel("Reminder Type",
+        #                                      alignment=QtCore.Qt.AlignCenter)
         self.reminder_select = qw.QComboBox()
         self.reminder_select.currentTextChanged.connect(self.reminderSelected)
         self.reminder_options = None
 
-        self.layout.addWidget(self.reminder_instruction)
-        self.layout.addWidget(self.reminder_select)
+        #self.layout.addWidget(self.reminder_instruction)
+        self.layout.addWidget(self.reminder_select, QtCore.Qt.AlignTop)
 
         for reminder_type in reminders.reminder_option_dict.keys():
             self.reminder_select.addItem(reminder_type)
@@ -106,7 +143,7 @@ class ReminderOptionContainer(qw.QWidget):
         if self.reminder_options:
             self.reminder_options.deleteLater()
         self.reminder_options = reminders.reminder_option_dict[reminder_name]()
-        self.layout.addWidget(self.reminder_options)
+        self.layout.addWidget(self.reminder_options, QtCore.Qt.AlignTop)
 
     def getReminder(self):
         reminder = self.reminder_options.getReminder()
@@ -226,18 +263,13 @@ class StandUpWindow(qw.QMainWindow):
 
         self.session_options = SessionOptions()
 
-        self.reminder_options = ReminderOptionContainer(reminders.reminder_option_dict)
-
         self.start_session_button = qw.QPushButton("Start Session")
         self.start_session_button.clicked.connect(self.start_session)
 
         self.start_layout.addWidget(self.title)
         self.start_layout.addWidget(self.session_instruction)
         self.start_layout.addWidget(self.session_options)
-        self.start_layout.addWidget(self.reminder_options)
         self.start_layout.addWidget(self.start_session_button)
-        # Load reminder types after setting layout so
-        # the reminderSelectedMethod works properly
 
         # Set up timer screen
         self.timer_widget = TimerWidget()
@@ -278,13 +310,29 @@ class StandUpWindow(qw.QMainWindow):
             self.screen_stack.setCurrentWidget(self.timer_screen)
             self.timer_widget.startNewCountdown(self.interval_duration)
 
+    def focus_interval_ended(self):
+        if self.focus_reminder:
+            self.focus_reminder.handle()
+            self.transition_message.setText(self.focus_reminder.message)
+            self.screen_stack.setCurrentWidget(self.transition_screen)
+        else:
+            self.start_next_interval()
+
+    def break_interval_ended(self):
+        if self.break_reminder:
+            self.break_reminder.handle()
+            self.transition_message.setText(self.break_reminder.message)
+            self.screen_stack.setCurrentWidget(self.transition_screen)
+        else:
+            self.start_next_interval()
+
     def interval_ended(self, timer_finished):
         if timer_finished:
             if self.is_break:
-                self.start_next_interval()
+                self.break_interval_ended()
+                #self.start_next_interval()
             else:
-                self.reminder.handle()
-                self.screen_stack.setCurrentWidget(self.transition_screen)
+                self.focus_interval_ended()
             # TODO add new screen for after intervals
         else:
             #TODO Interval was cancelled, what do?
@@ -293,8 +341,8 @@ class StandUpWindow(qw.QMainWindow):
     @QtCore.Slot()
     def start_session(self):
         self.session_queue = self.session_options.get_session_queue()
-        self.reminder = self.reminder_options.getReminder()
-        self.transition_message.setText(self.reminder.message)
+        self.focus_reminder = self.session_options.get_focus_reminder()
+        self.break_reminder = self.session_options.get_break_reminder()
         self.start_next_interval()
 
     def finish_session(self):
