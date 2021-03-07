@@ -53,6 +53,18 @@ class ReminderOptions(qw.QWidget):
     def __repr__(self):
         return f'{self.__class__.__name__}: {dir(self)}'
 
+class NoReminderOptions(qw.QLabel, ReminderOptions):
+    """
+        This is for a reminder that does nothing and starts the next interval immediately
+        getReminder returns None so the StandUp app can handle it by truthiness check.
+    """
+    name = "None"
+    def __init__(self):
+        super().__init__()
+        self.setText("The next interval will start right away.")
+
+    def getReminder(self):
+        return None
 
 class MessageReminderOptions(qw.QWidget):
     """ Since multiple ReminderOptions subclasses just accept simple messages for their reminders I am making this it's own class that those other reminders will inherit. """
@@ -65,7 +77,7 @@ class MessageReminderOptions(qw.QWidget):
     def initUI(self):
         self.layout = qw.QFormLayout(self)
 
-        message_label = qw.QLabel("Reminder Message:")
+        message_label = qw.QLabel("Message:")
         self.message_input = qw.QLineEdit()
 
         self.layout.addRow(message_label, self.message_input)
@@ -73,6 +85,7 @@ class MessageReminderOptions(qw.QWidget):
 
 class BrowserReminderOptions(ReminderOptions):
     name = "Open URL"
+    description = "Opens a URL in your default browser."
 
     def __init__(self):
         super().__init__()
@@ -87,7 +100,7 @@ class BrowserReminderOptions(ReminderOptions):
         tab_policies = qw.QGroupBox("Open URL In...")
         self.policy_group = qw.QButtonGroup()
         tab_policies.setFlat(True)
-        hbox = qw.QHBoxLayout(tab_policies)
+        vbox = qw.QVBoxLayout(tab_policies)
 
         same_window = qw.QRadioButton("Existing Window")
         new_window = qw.QRadioButton("New Window")
@@ -98,9 +111,9 @@ class BrowserReminderOptions(ReminderOptions):
         self.policy_group.addButton(new_tab, id=2)
 
         new_tab.setChecked(True)
-        hbox.addWidget(new_tab)
-        hbox.addWidget(new_window)
-        hbox.addWidget(same_window)
+        vbox.addWidget(new_tab)
+        vbox.addWidget(new_window)
+        vbox.addWidget(same_window)
 
         self.layout.addRow(url_label, self.url_input)
         self.layout.addRow(tab_policies)
@@ -159,7 +172,7 @@ class RaiseWindowReminder(Reminder):
         self.window = window
 
     def handle(self):
-        # There is a chance this doesn't work on Windows or Mac.
+        # NOTE: There is a chance this doesn't work on Windows or Mac.
         # Or maybe even window managers other than X11
         self.window.setWindowState(self.window.windowState() &
                                    ~Qt.WindowMinimized | Qt.WindowActive)
@@ -176,9 +189,5 @@ class MaximizeWindowReminder(Reminder):
         self.window.activateWindow()
 
 reminder_option_dict = {subclass.name: subclass for subclass in ReminderOptions.__subclasses__()}
-
-#def get_reminder_options():
-#    return ReminderOptions.__subclasses__()
-
 
 
