@@ -143,8 +143,8 @@ class Reminder:
 
 
 class BrowserReminder(Reminder):
+    message = "Opening URL..."
     def __init__(self, url, policy):
-        self.message = "Opening URL..."
         self.url = url
         self.policy = policy
 
@@ -155,6 +155,7 @@ class BrowserReminder(Reminder):
 class RaiseWindowReminder(Reminder):
     def __init__(self, message, window):
         super().__init__()
+        self.message = message
         self.window = window
 
     def handle(self):
