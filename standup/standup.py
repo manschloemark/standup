@@ -11,6 +11,20 @@ from PySide6 import QtCore
 from QProgressRing import QProgressRing
 import reminders
 
+class DurationSpinBox(qw.QSpinBox):
+    """
+        This widget aims to provide a user-friendly and intuitive method of
+        entering a duration of time in hours and minutes.
+        It currently does not work as well as I want it to.
+        I think QSpinBox is not right parent widget
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def textFromValue(self, value):
+        h, m = divmod(value, 60)
+        return f'{h}h {m}m'
+
 # NOTE this doesn't really need to be a class.
 #      Instead I can make a function that returns a deque or queue
 class SessionQueue():
@@ -61,7 +75,7 @@ class SessionOptions(qw.QWidget):
         # TODO customize SpinBoxes so they work nicely for time
         # The units for these SpinBoxes is minutes but the timer uses seconds
         self.session_dur_label = qw.QLabel("Session Length:")
-        self.session_duration = qw.QSpinBox()
+        self.session_duration = DurationSpinBox()
 
         # TODO add controls that let the user make a queue out of these
         self.interval_options_container = qw.QWidget()
@@ -69,7 +83,7 @@ class SessionOptions(qw.QWidget):
 
         self.focus_interval_vbox = qw.QVBoxLayout()
         self.focus_dur_label = qw.QLabel("Focus Interval Length:")
-        self.focus_duration = qw.QSpinBox()
+        self.focus_duration = DurationSpinBox()
         self.focus_reminder_label = qw.QLabel("Post-Focus Reminder")
         self.focus_reminder_options = ReminderOptionContainer(reminders.reminder_option_dict)
 
@@ -80,7 +94,7 @@ class SessionOptions(qw.QWidget):
 
         self.break_interval_vbox = qw.QVBoxLayout()
         self.break_dur_label = qw.QLabel("Break Interval Length:")
-        self.break_duration = qw.QSpinBox()
+        self.break_duration = DurationSpinBox()
         self.break_reminder_label = qw.QLabel("Post-Break Reminder")
         self.break_reminder_options = ReminderOptionContainer(reminders.reminder_option_dict)
 
