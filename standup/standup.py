@@ -26,12 +26,16 @@ class SessionQueue():
 
     # NOTE I don't like this.
     def get_next_interval(self):
+        if self.session_remaining <= 0:
+            return None, None
         self.is_break = not self.is_break
         interval_length = None
         if self.is_break:
             interval_length = self.break_interval
         else:
             interval_length = self.focus_interval
+
+        self.session_remaining -= interval_length
 
         return self.is_break, interval_length
 
@@ -210,6 +214,9 @@ class StandUpWindow(qw.QMainWindow):
         self.timer_screen = qw.QWidget()
         self.timer_layout = qw.QVBoxLayout(self.timer_screen)
 
+        self.transition_screen = qw.QWidget()
+        self.transition_layout = qw.QVBoxLayout(self.transition_screen)
+
         # Set up start screen
         self.title = qw.QLabel('Stand Up',
                                alignment=QtCore.Qt.AlignCenter)
@@ -241,10 +248,18 @@ class StandUpWindow(qw.QMainWindow):
         # TODO but maybe those should be in the timer widgets?
         self.timer_layout.addWidget(self.timer_widget)
 
+        # Timer End Screen / Transition Screen
+
+        self.transition_message = qw.QLabel()
+        self.continue_button = qw.QPushButton("Next Interval")
+        self.continue_button.clicked.connect(self.start_next_interval)
+
+        self.transition_layout.addWidget(self.transition_message, QtCore.Qt.AlignCenter)
+        self.transition_layout.addWidget(self.continue_button, QtCore.Qt.AlignCenter)
 
         self.screen_stack.addWidget(self.start_screen)
         self.screen_stack.addWidget(self.timer_screen)
-
+        self.screen_stack.addWidget(self.transition_screen)
 
         self.setCentralWidget(self.screen_stack)
 
@@ -252,29 +267,39 @@ class StandUpWindow(qw.QMainWindow):
     def start_next_interval(self):
         self.is_break, self.interval_duration = self.session_queue.get_next_interval()
 
-        if self.is_break:
-            self.setWindowTitle(self.window_title + " - Break")
+        if self.is_break is None and self.interval_duration is None:
+            self.finish_session()
         else:
-            self.setWindowTitle(self.window_title + " - Focus")
+            if self.is_break:
+                self.setWindowTitle(self.window_title + " - Break")
+            else:
+                self.setWindowTitle(self.window_title + " - Focus")
 
-        self.screen_stack.setCurrentWidget(self.timer_screen)
-        self.timer_widget.startNewCountdown(self.interval_duration)
+            self.screen_stack.setCurrentWidget(self.timer_screen)
+            self.timer_widget.startNewCountdown(self.interval_duration)
 
-    def interval_ended(self, trigger_reminder):
-        if trigger_reminder:
-            self.reminder.handle()
+    def interval_ended(self, timer_finished):
+        if timer_finished:
+            if self.is_break:
+                self.start_next_interval()
+            else:
+                self.reminder.handle()
+                self.screen_stack.setCurrentWidget(self.transition_screen)
             # TODO add new screen for after intervals
         else:
             #TODO Interval was cancelled, what do?
-            self.screen_stack.setCurrentWidget(self.start_screen)
+            self.finish_session()
 
     @QtCore.Slot()
     def start_session(self):
         self.session_queue = self.session_options.get_session_queue()
         self.reminder = self.reminder_options.getReminder()
+        self.transition_message.setText(self.reminder.message)
         self.start_next_interval()
 
-
+    def finish_session(self):
+        self.setWindowTitle(self.window_title)
+        self.screen_stack.setCurrentWidget(self.start_screen)
 
 
 def main():
