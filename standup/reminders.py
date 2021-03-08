@@ -53,7 +53,7 @@ class ReminderOptions(qw.QWidget):
     def __repr__(self):
         return f'{self.__class__.__name__}: {dir(self)}'
 
-class NoReminderOptions(qw.QLabel, ReminderOptions):
+class NoReminderOptions(ReminderOptions):
     """
         This is for a reminder that does nothing and starts the next interval immediately
         getReminder returns None so the StandUp app can handle it by truthiness check.
@@ -61,7 +61,7 @@ class NoReminderOptions(qw.QLabel, ReminderOptions):
     name = "None"
     def __init__(self):
         super().__init__()
-        self.setText("The next interval will start right away.")
+        #self.setText("No reminder - the next interval will start right away.")
 
     def getReminder(self):
         return None
