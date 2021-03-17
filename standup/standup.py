@@ -177,8 +177,8 @@ class SessionOptions(qw.QWidget):
         self.remove_focus_interval = qw.QPushButton('-')
         self.remove_focus_interval.clicked.connect(self.removeFocusInterval)
 
-        focus_button_container.addWidget(self.add_focus_interval)
-        focus_button_container.addWidget(self.remove_focus_interval)
+        focus_button_container.addWidget(self.add_focus_interval, 0)
+        focus_button_container.addWidget(self.remove_focus_interval, 0)
 
         break_button_container = qw.QHBoxLayout()
         self.add_break_interval = qw.QPushButton('+')
@@ -186,8 +186,8 @@ class SessionOptions(qw.QWidget):
         self.remove_break_interval = qw.QPushButton('-')
         self.remove_break_interval.clicked.connect(self.removeBreakInterval)
 
-        break_button_container.addWidget(self.add_break_interval)
-        break_button_container.addWidget(self.remove_break_interval)
+        break_button_container.addWidget(self.add_break_interval, 0)
+        break_button_container.addWidget(self.remove_break_interval, 0)
 
         self.interval_options_grid.addWidget(focus_label, 0, 0)
         self.interval_options_grid.addWidget(break_label, 0, 1)
