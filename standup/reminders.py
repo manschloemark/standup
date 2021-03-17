@@ -1,5 +1,5 @@
 """
-    Module containing classes for different reminders for
+    Module containing classes of different reminders for
     standup.py
 
     There are two types of classes: ReminderOptions and Reminders
@@ -36,7 +36,7 @@ from PySide6.QtCore import Qt
 ### BASE CLASSES ###
 
 class ReminderOptions(qw.QWidget):
-    name = "Abstract Base Class"
+    name = "Base Class"
 
     def __init__(self):
         super().__init__()
