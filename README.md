@@ -59,5 +59,5 @@ Open the directory and run standup.py:
   - Base classes for the Qt widgets related to reminders (ReminderOptions) and the python objects that actually make the reminders happen (Reminder) make it easy to implement new reminders.
 
 ## TODO
-- Make it easy to install and run
-- Add 'profiles' so users can save settings for quick reuse and name them
+- Make it easier to install and run
+- Add named profiles so users can save settings for quick reuse
