@@ -6,7 +6,7 @@ import webbrowser
 
 import sys
 from PySide6 import QtWidgets as qw
-from PySide6 import QtCore
+from PySide6 import QtCore, QtGui
 
 from QProgressRing import QProgressRing
 import reminders
@@ -121,16 +121,17 @@ class IntervalOptions(qw.QWidget):
         self.initUI(reminder_dict)
 
     def initUI(self, reminder_dict):
-        self.layout = qw.QVBoxLayout(self)
+        self.layout = qw.QFormLayout(self)
+        self.layout.setFieldGrowthPolicy(qw.QFormLayout.FieldsStayAtSizeHint)
+        self.layout.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTop)
         self.duration_label = qw.QLabel("Interval Length:")
         self.duration_input = DurationSpinBox()
         self.reminder_label = qw.QLabel("Reminder")
         self.reminder_options = ReminderOptionContainer(reminder_dict)
 
-        self.layout.addWidget(self.duration_label)
-        self.layout.addWidget(self.duration_input)
-        self.layout.addWidget(self.reminder_label)
-        self.layout.addWidget(self.reminder_options)
+        self.layout.addRow(self.duration_label, self.duration_input)
+        self.layout.addRow(self.reminder_label)
+        self.layout.addRow(self.reminder_options)
 
     def getInterval(self):
         duration = self.duration_input.value() * 60
@@ -141,6 +142,7 @@ class IntervalOptions(qw.QWidget):
 class SessionOptions(qw.QWidget):
     def __init__(self, reminder_options):
         super().__init__()
+        #self._palette = QtGui.QGuiApplication.palette()
         self.reminder_options = reminder_options
         self.init_ui()
 
@@ -159,13 +161,19 @@ class SessionOptions(qw.QWidget):
         focus_label = qw.QLabel("Focus Intervals")
         break_label = qw.QLabel("Break Intervals")
 
-        self.focus_intervals_container = qw.QVBoxLayout()
-        default_focus_option = IntervalOptions(self.reminder_options)
-        self.focus_intervals_container.addWidget(default_focus_option)
+        focus_interval_frame = qw.QFrame()
+        focus_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
+        self.focus_intervals_container = qw.QVBoxLayout(focus_interval_frame)
+        self.addFocusInterval()
+        #default_focus_option = IntervalOptions(self.reminder_options)
+        #self.focus_intervals_container.addWidget(default_focus_option)
 
-        self.break_intervals_container = qw.QVBoxLayout()
-        default_break_option = IntervalOptions(self.reminder_options)
-        self.break_intervals_container.addWidget(default_break_option)
+        break_interval_frame = qw.QFrame()
+        break_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
+        self.break_intervals_container = qw.QVBoxLayout(break_interval_frame)
+        self.addBreakInterval()
+        #default_break_option = IntervalOptions(self.reminder_options)
+        #self.break_intervals_container.addWidget(default_break_option)
 
         self.add_focus_interval = qw.QPushButton("Add Focus Interval")
         self.add_focus_interval.clicked.connect(self.addFocusInterval)
@@ -175,8 +183,8 @@ class SessionOptions(qw.QWidget):
         self.interval_options_grid.addWidget(focus_label, 0, 0)
         self.interval_options_grid.addWidget(break_label, 0, 1)
 
-        self.interval_options_grid.addLayout(self.focus_intervals_container, 1, 0, 2, 1)
-        self.interval_options_grid.addLayout(self.break_intervals_container, 1, 1, 2, 1)
+        self.interval_options_grid.addWidget(focus_interval_frame, 1, 0, 2, 1)
+        self.interval_options_grid.addWidget(break_interval_frame, 1, 1, 2, 1)
         self.interval_options_grid.addWidget(self.add_focus_interval, 3, 0)
         self.interval_options_grid.addWidget(self.add_break_interval, 3, 1)
 
@@ -185,10 +193,32 @@ class SessionOptions(qw.QWidget):
         self.layout.addWidget(self.interval_options_container, 1, 0, 1, 2)
 
     def addFocusInterval(self, *args):
-        self.focus_intervals_container.addWidget(IntervalOptions(self.reminder_options))
+        new_widget = IntervalOptions(self.reminder_options)
+        new_widget.setAutoFillBackground(True)
+        palette = new_widget.palette()
+
+        if(self.focus_intervals_container.count() % 2):
+            palette.setColor(palette.Window, palette.color(palette.Active, palette.Base))
+        else:
+            palette.setColor(palette.Window, palette.color(palette.Active, palette.AlternateBase))
+
+        new_widget.setPalette(palette)
+
+        self.focus_intervals_container.addWidget(new_widget)
 
     def addBreakInterval(self, *args):
-        self.break_intervals_container.addWidget(IntervalOptions(self.reminder_options))
+        new_widget = IntervalOptions(self.reminder_options)
+        new_widget.setAutoFillBackground(True)
+        palette = new_widget.palette()
+
+        if(self.break_intervals_container.count() % 2):
+            palette.setColor(palette.Window, palette.color(palette.Active, palette.AlternateBase))
+        else:
+            palette.setColor(palette.Window, palette.color(palette.Active, palette.Base))
+
+        new_widget.setPalette(palette)
+
+        self.break_intervals_container.addWidget(new_widget)
 
     def get_session_queue(self):
         session_duration = self.session_duration.value() * 60
@@ -310,7 +340,6 @@ class TimerWidget(qw.QWidget):
 class StandUpWindow(qw.QMainWindow):
     def __init__(self):
         super().__init__()
-
         self.window_title = "Stand Up"
 
         self.init_ui()
