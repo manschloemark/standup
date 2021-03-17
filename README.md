@@ -46,6 +46,18 @@ Open the directory and run standup.py:
 
 ### That's it!
 
+## What I've Learned
+- Qt6
+  - This was my first project using Qt6 instead of Qt5.
+- PySide
+  - Before this project I used the PyQt bindings. The transition between the two was pretty smooth.
+- Custom Widgets
+  - QProgressRing.py
+    - I made the QProgressRing as an alternative to the standard QProgressBar. Making this widget turned into it's own mini-project and it was a lot of fun. I hadn't re-implemented the paintEvent method before and in doing so I learned a lot about the QtGui module, QPainter, and QPalette objects.
+- Making the most of inheritance
+  - I'm really happy with the way I used classes and inheritance to simplify the creation of Reminder and ReminderOptions (reminders.py)
+  - Base classes for the Qt widgets related to reminders (ReminderOptions) and the python objects that actually make the reminders happen (Reminder) make it easy to implement new reminders.
+
 ## TODO
 - Make it easy to install and run
 - Add 'profiles' so users can save settings for quick reuse and name them
