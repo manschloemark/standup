@@ -163,14 +163,14 @@ class SessionOptions(qw.QWidget):
 
         focus_interval_frame = qw.QFrame()
         focus_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
-        self.focus_intervals_container = qw.QVBoxLayout(focus_interval_frame)
+        self.focus_intervals_container = qw.QFormLayout(focus_interval_frame)
         self.addFocusInterval()
         #default_focus_option = IntervalOptions(self.reminder_options)
         #self.focus_intervals_container.addWidget(default_focus_option)
 
         break_interval_frame = qw.QFrame()
         break_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
-        self.break_intervals_container = qw.QVBoxLayout(break_interval_frame)
+        self.break_intervals_container = qw.QFormLayout(break_interval_frame)
         self.addBreakInterval()
         #default_break_option = IntervalOptions(self.reminder_options)
         #self.break_intervals_container.addWidget(default_break_option)
@@ -194,6 +194,8 @@ class SessionOptions(qw.QWidget):
 
     def addFocusInterval(self, *args):
         new_widget = IntervalOptions(self.reminder_options)
+        delete_button = qw.QPushButton('X')
+        delete_button.clicked.connect(lambda x: self.focus_intervals_container.removeRow(delete_button) if self.focus_intervals_container.count() > 1 else None)
         new_widget.setAutoFillBackground(True)
         palette = new_widget.palette()
 
@@ -204,10 +206,12 @@ class SessionOptions(qw.QWidget):
 
         new_widget.setPalette(palette)
 
-        self.focus_intervals_container.addWidget(new_widget)
+        self.focus_intervals_container.addRow(new_widget, delete_button)
 
     def addBreakInterval(self, *args):
         new_widget = IntervalOptions(self.reminder_options)
+        delete_button = qw.QPushButton('X')
+        delete_button.clicked.connect(lambda x: self.break_intervals_container.removeRow(delete_button) if self.break_intervals_container.count() > 1 else None)
         new_widget.setAutoFillBackground(True)
         palette = new_widget.palette()
 
@@ -218,7 +222,7 @@ class SessionOptions(qw.QWidget):
 
         new_widget.setPalette(palette)
 
-        self.break_intervals_container.addWidget(new_widget)
+        self.break_intervals_container.addRow(new_widget, delete_button)
 
     def get_session_queue(self):
         session_duration = self.session_duration.value() * 60
