@@ -24,10 +24,8 @@ def get_children(layout):
 
 class DurationSpinBox(qw.QSpinBox):
     """
-        This widget aims to provide a user-friendly and intuitive method of
-        entering a duration of time in hours and minutes.
-        It currently does not work as well as I want it to.
-        I think QSpinBox is not right parent widget
+        This widget provides a user-friendly and intuitive method of
+        entering an amount of time in hours and minutes.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,7 +39,7 @@ class DurationSpinBox(qw.QSpinBox):
 #      Instead I can make a function that returns a deque or queue
 class SessionQueue():
     """
-        Class meant to abstract the work of determining when a session is over
+        Abstracts the work of determining when a session is over
         and when to repeat the intervals and what not
         Not sure if this is really necessary, but I figured I'd give it a shot
     """
@@ -54,7 +52,6 @@ class SessionQueue():
         self.break_index = 0
         self.is_break = True
 
-    # NOTE I don't like this.
     def get_next_interval(self):
         self.is_break = not self.is_break
         if self.session_remaining <= 0:
@@ -72,7 +69,6 @@ class SessionQueue():
                 self.focus_index = 0
 
         self.session_remaining -= interval_length
-
 
         return self.is_break, interval_length, reminder
 
@@ -163,30 +159,43 @@ class SessionOptions(qw.QWidget):
 
         focus_interval_frame = qw.QFrame()
         focus_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
-        self.focus_intervals_container = qw.QFormLayout(focus_interval_frame)
+        self.focus_intervals_container = qw.QVBoxLayout(focus_interval_frame)
         self.addFocusInterval()
         #default_focus_option = IntervalOptions(self.reminder_options)
         #self.focus_intervals_container.addWidget(default_focus_option)
 
         break_interval_frame = qw.QFrame()
         break_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
-        self.break_intervals_container = qw.QFormLayout(break_interval_frame)
+        self.break_intervals_container = qw.QVBoxLayout(break_interval_frame)
         self.addBreakInterval()
         #default_break_option = IntervalOptions(self.reminder_options)
         #self.break_intervals_container.addWidget(default_break_option)
 
-        self.add_focus_interval = qw.QPushButton("Add Focus Interval")
+        focus_button_container = qw.QHBoxLayout()
+        self.add_focus_interval = qw.QPushButton('+')
         self.add_focus_interval.clicked.connect(self.addFocusInterval)
-        self.add_break_interval = qw.QPushButton("Add Break Interval")
+        self.remove_focus_interval = qw.QPushButton('-')
+        self.remove_focus_interval.clicked.connect(self.removeFocusInterval)
+
+        focus_button_container.addWidget(self.add_focus_interval)
+        focus_button_container.addWidget(self.remove_focus_interval)
+
+        break_button_container = qw.QHBoxLayout()
+        self.add_break_interval = qw.QPushButton('+')
         self.add_break_interval.clicked.connect(self.addBreakInterval)
+        self.remove_break_interval = qw.QPushButton('-')
+        self.remove_break_interval.clicked.connect(self.removeBreakInterval)
+
+        break_button_container.addWidget(self.add_break_interval)
+        break_button_container.addWidget(self.remove_break_interval)
 
         self.interval_options_grid.addWidget(focus_label, 0, 0)
         self.interval_options_grid.addWidget(break_label, 0, 1)
 
         self.interval_options_grid.addWidget(focus_interval_frame, 1, 0, 2, 1)
         self.interval_options_grid.addWidget(break_interval_frame, 1, 1, 2, 1)
-        self.interval_options_grid.addWidget(self.add_focus_interval, 3, 0)
-        self.interval_options_grid.addWidget(self.add_break_interval, 3, 1)
+        self.interval_options_grid.addLayout(focus_button_container, 3, 0)
+        self.interval_options_grid.addLayout(break_button_container, 3, 1)
 
         self.layout.addWidget(self.session_dur_label, 0, 0)
         self.layout.addWidget(self.session_duration, 0, 1)
@@ -194,8 +203,6 @@ class SessionOptions(qw.QWidget):
 
     def addFocusInterval(self, *args):
         new_widget = IntervalOptions(self.reminder_options)
-        delete_button = qw.QPushButton('X')
-        delete_button.clicked.connect(lambda x: self.focus_intervals_container.removeRow(delete_button) if self.focus_intervals_container.count() > 1 else None)
         new_widget.setAutoFillBackground(True)
         palette = new_widget.palette()
 
@@ -206,12 +213,10 @@ class SessionOptions(qw.QWidget):
 
         new_widget.setPalette(palette)
 
-        self.focus_intervals_container.addRow(new_widget, delete_button)
+        self.focus_intervals_container.addWidget(new_widget)
 
     def addBreakInterval(self, *args):
         new_widget = IntervalOptions(self.reminder_options)
-        delete_button = qw.QPushButton('X')
-        delete_button.clicked.connect(lambda x: self.break_intervals_container.removeRow(delete_button) if self.break_intervals_container.count() > 1 else None)
         new_widget.setAutoFillBackground(True)
         palette = new_widget.palette()
 
@@ -222,7 +227,18 @@ class SessionOptions(qw.QWidget):
 
         new_widget.setPalette(palette)
 
-        self.break_intervals_container.addRow(new_widget, delete_button)
+        self.break_intervals_container.addWidget(new_widget)
+
+
+    def removeFocusInterval(self, *args):
+        count = self.focus_intervals_container.count()
+        if count > 1:
+            self.focus_intervals_container.itemAt(count - 1).widget().deleteLater()
+
+    def removeBreakInterval(self, *args):
+        count = self.break_intervals_container.count()
+        if count > 1:
+            self.break_intervals_container.itemAt(count - 1).widget().deleteLater()
 
     def get_session_queue(self):
         session_duration = self.session_duration.value() * 60
@@ -372,18 +388,15 @@ class StandUpWindow(qw.QMainWindow):
         self.start_session_button = qw.QPushButton("Start Session")
         self.start_session_button.clicked.connect(self.start_session)
 
-        self.start_layout.addWidget(self.title)
-        self.start_layout.addWidget(self.session_instruction)
-        self.start_layout.addWidget(self.session_options)
-        self.start_layout.addWidget(self.start_session_button)
+        self.start_layout.addWidget(self.title, 0, QtCore.Qt.AlignCenter)
+        self.start_layout.addWidget(self.session_instruction, 0, QtCore.Qt.AlignCenter)
+        self.start_layout.addWidget(self.session_options, 1, QtCore.Qt.AlignTop)
+        self.start_layout.addWidget(self.start_session_button, QtCore.Qt.AlignTop)
 
         # Set up timer screen
         self.timer_widget = TimerWidget()
         self.timer_widget.done.connect(self.interval_ended)
 
-        # TODO gonna have some slot / signal to handle timer finish
-        # TODO gonna need controls to cancel / pause timers, I suppose.
-        # TODO but maybe those should be in the timer widgets?
         self.timer_layout.addWidget(self.timer_widget)
 
         # Timer End Screen / Transition Screen
@@ -402,6 +415,7 @@ class StandUpWindow(qw.QMainWindow):
         self.setCentralWidget(self.screen_stack)
 
         # NOTE this does nothing right now
+        # TODO implement widget that shows what the session
         self.session_info = SessionInfo()
 
         self.addDockWidget(QtCore.Qt.TopDockWidgetArea, self.session_info)
