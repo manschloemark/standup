@@ -3,11 +3,6 @@
 
     Custom PyQt6 QWidget that functions like a QProgressBar
     that draws a circle instead of a bar.
-
-    I might rename this to something like 'QCountdownWidget'
-    if I can't think of a way to generalize the API enough to make
-    it work with both % and time.
-    Maybe I can check the QProgressBar API to see if it's possible
 """
 
 import math
@@ -24,8 +19,7 @@ class QProgressRing(QtWidgets.QWidget):
     _ARC_OFFSET = 90 * 16     # This variable is used to offset the arc
                               # since I want the progress ring
                               # to start that the 12 o'clock position (90deg)
-                              # TODO maybe make this something easily
-                              # adjustable
+                              # TODO make this easily adjustable
     ### Signals ###
     complete = QtCore.Signal()
 
@@ -36,7 +30,7 @@ class QProgressRing(QtWidgets.QWidget):
         self._maximum = 0
         self._value = 0
         self._clockwise = True
-        self._format = '%' # I'm not sure how to implement a cool formatter yet
+        self._format = '%'
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
         self.calcRadius(self.rect().size())
@@ -91,7 +85,7 @@ class QProgressRing(QtWidgets.QWidget):
         return round(((self.progress() / self.range()) * 100), 1)
 
     def getFormattedText(self):
-        if self._value == self._maximum: # NOTE Might remove the completion string and let that be handled by the code that uses this
+        if self._value == self._maximum:
             return 'Done!'
         if self._format == '%':
             return f'{self.percentComplete()}%'
@@ -153,7 +147,7 @@ class QProgressRing(QtWidgets.QWidget):
 
         timer_font = QtGui.QFont('monospace') # Change this to not be hardcoded?
         timer_font.setStyleHint(QtGui.QFont.Monospace)
-        timer_font.setPointSize(12) # TODO make this not hardcoded, maybe?
+        timer_font.setPointSize(12) # TODO make this not hardcoded or change based on size of widget?
 
         qp.setFont(timer_font)
         qp.drawText(self._square, QtCore.Qt.AlignCenter, self.getFormattedText())

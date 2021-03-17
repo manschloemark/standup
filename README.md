@@ -1,33 +1,24 @@
 # Stand Up
 Remind your future self to stand up every once in a while.
 
-Stand Up is a desktop application that helps you get the most out of your work sessions.
-It lets you set up intervals to work and take breaks and customize reminders that tell you when it's time to swtich.
-These reminders are meant to draw your attention away from your work long enough to realize it's a good idea to take a break.
-It might sound odd that you're trying to break your focus, but taking breaks can be more productive and healthy in the long run.
+Stand Up is a tool that helps you focus and stay healthy over long periods of work.  
+With Stand Up you can set timers for periods of focus and rest and customize reminders that tell you when to switch.
 
 It's important to take breaks regularly and:
  1. stretch your body
  1. rest your eyes
  1. clear your head
 
-Despite knowing all this, I struggle to actually implement it in my routine.  
-Some days it's hard to focus for long periods of time.  
-Sometimes it's hard to pull yourself away from an interesting or difficult problem.  
-I've tried using regular alarms but I tend to filter them out after a while. I just shut off the alarm without breaking my focus.  
-
-That's why I made Stand Up.
-
 ## How to run it
 First, make sure you have at least Python 3.6 by running:  
 ` python3 --version `  
-Second, make sure you have the PyQt5 module for Python.
-Check if PyQt5 is in the output of this command:  
+Second, make sure you have the PySide6 module for Python.
+Check if PySide6 is in the output of this command:  
 `python3 -m pip list`  
-If you do not see PyQt5 in this list, you need to install it with:
- `python3 -m pip install PyQt5`  
+If you do not see PySide6 in this list, you need to install it with:
+ `python3 -m pip install PySide6`  
 
-If you have a Python environment that can run it, clone this repo with:  
+Once you have a Python environment that can run it, clone this repo with:  
 `git clone https://github.com/manschloemark/standup.git`  
 Open the directory and run standup.py:  
 `python3 standup.py`  
@@ -42,20 +33,19 @@ Open the directory and run standup.py:
 - Break Intervals  : how long your breaks are
   - After a break interval ends the program will automatically start the next work interval
   - Set this to 0 if you want to manually start the next work interval
+- Interval Queues  :
+  - Break up the monotony with interval queues. Instead of alternating between one focus interval and one break interval you can plan multiple focus and break intervals, each with different reminders, to keep things fresh.
+  - This feature makes it possible to implement the Pomodoro Technique, for example.
 
-### Set the reminder
+### Customize reminders
 - Reminder Type    : choose what happens at the end of a work interval
   - Open a URL: enter any URL you'd like and the program will open it in your default browser
   - Raise StandUp window: Raise the app's window to the top of your desktop and gives it focus. This will not change the size of the window.
   - Maximize StandUp window: the same as 'Raise StandUp window' but instead makes sure the window is maximized.
+- You can set different reminders for the end of focus and break intervals
 
 ### That's it!
 
 ## TODO
 - Make it easy to install and run
-- Fix RaiseWindow and MaximizeWindow reminders
-  - these reminders are supposed to display a message during the reminder
-  - when the user sets a break timer this message is not displayed
 - Add 'profiles' so users can save settings for quick reuse and name them
-- Allow users to queue intervals for more dynamic sessions
-  - e.g. a pomodoro timer
