@@ -9,23 +9,19 @@
     ReminderOptions are widgets that allow the user to set options specific
     to the Reminder
 
-    ReminderOptions constructors all take one argument - a QLabel
-        - some reminder types will clear the label text, some will allow the
-          user to set a custom message
-
     ReminderOption subclasses should set the name attribute to something
     appropriate for a QComboBox - this is what the user sees and picks from
 
-    ReminderOptions should implement three methods:
+    ReminderOptions should implement two methods:
         1. getReminder()      - returns a new Reminder object with the input
                                  given.
         1. loadProfile()      - sets the reminder widgets to values specified
                                  in a user profile.
                                  NOTE: profiles are not implemented yet.
 
-    Reminders are classes that must have a handle() method.
-        - This method triggers the actual reminder meant to get the user's
-          attention.
+    Reminders must implement one method:
+        1. handle()           - This method triggers the actual reminder
+                                meant to get the user's attention.
 """
 
 import webbrowser
