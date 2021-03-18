@@ -1,8 +1,8 @@
 # Stand Up
-Remind your future self to stand up every once in a while.
+_Remind your future self to take a break every once in a while._
 
-Stand Up is a tool that helps you focus and stay healthy over long periods of work.  
-With Stand Up you can set timers for periods of focus and rest and customize reminders that tell you when to switch.
+Stand Up is an application that helps you focus and stay healthy over long work sessions.  
+With Stand Up you can set timers for periods of focus and rest and customize reminders that tell you when to switch.  
 
 It's important to take breaks regularly and:
  1. stretch your body
@@ -34,29 +34,35 @@ Open the directory and run standup.py:
   - After a break interval ends the program will automatically start the next work interval
   - Set this to 0 if you want to manually start the next work interval
 - Interval Queues  :
-  - Break up the monotony with interval queues. Instead of alternating between one focus interval and one break interval you can plan multiple focus and break intervals, each with different reminders, to keep things fresh.
+  - Break up the monotony with interval queues. Instead of alternating between one focus interval and one break interval you can plan multiple focus and break intervals, each with different reminders and durations to keep things fresh.
   - This feature makes it possible to implement the Pomodoro Technique, for example.
 
 ### Customize reminders
-- Reminder Type    : choose what happens at the end of a work interval
+- Reminder Types    : choose what happens at the end of a work interval
   - Open a URL: enter any URL you'd like and the program will open it in your default browser
   - Raise StandUp window: Raise the app's window to the top of your desktop and gives it focus. This will not change the size of the window.
   - Maximize StandUp window: the same as 'Raise StandUp window' but instead makes sure the window is maximized.
-- You can set different reminders for the end of focus and break intervals
+- You can set different reminders for the end of focus and break intervals.
 
 ### That's it!
 
-## What I've Learned
+## Learning Outcomes
 - Qt6
-  - This was my first project using Qt6 instead of Qt5.
+  - This was my first project using Qt6. Prior to this I used Qt5.
 - PySide
   - Before this project I used the PyQt bindings. The transition between the two was pretty smooth.
-- Custom Widgets
-  - QProgressRing.py
-    - I made the QProgressRing as an alternative to the standard QProgressBar. Making this widget turned into it's own mini-project and it was a lot of fun. I hadn't re-implemented the paintEvent method before and in doing so I learned a lot about the QtGui module, QPainter, and QPalette objects.
+- In-depth Custom Widgets
+  - QProgressRing
+    - Custom subclass of QWidget that functions like a QProgressBar but draws a circle around the text.
+    - learned how to use paintEvents, QPainters, and QPalettes to maintain the Qt look and feel.
+  - TimerWidget
+    - This widget contains a QProgressRing and buttons to control the timer.
+    - learned how to use timerEvents and QTimers to make this a breeze.
 - Making the most of inheritance
-  - I'm really happy with the way I used classes and inheritance to simplify the creation of Reminder and ReminderOptions (reminders.py)
-  - Base classes for the Qt widgets related to reminders (ReminderOptions) and the python objects that actually make the reminders happen (Reminder) make it easy to implement new reminders.
+  - I'm happy with the way I used classes and inheritance to simplify the creation and use of reminders and reminder widgets.
+  - Base classes for widgets that let users customize reminders (ReminderOptions) and the python objects that actually make the reminders happen (Reminder) make it easy to implement new reminders.
+  - Adding new reminders is as simple as writing a new ReminderOptions and Reminder subclass. The program will automatically add the new reminder to the GUI
+
 
 ## TODO
 - Make it easier to install and run
