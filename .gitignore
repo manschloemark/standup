@@ -2,3 +2,4 @@ __pycache__/
 *.ctb*
 venv/
 old_*.py
+*.json
