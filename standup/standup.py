@@ -11,6 +11,17 @@ from PySide6 import QtCore, QtGui
 from QProgressRing import QProgressRing
 import reminders
 
+# TEMP GLOBAL VARIABLE TO PROFILE FILE
+DEBUG_profile_filename = "./profiles.json"
+def load_profile(profile_name: str):
+    with open(DEBUG_profile_filename) as config:
+        json_load = json.load(config)
+        profile = json_load
+
+def save_profile(profile_name: str, data: dict):
+    return None
+
+
 def get_children(layout):
     """
         Generator to get all widgets from a layout without relying on
@@ -106,6 +117,10 @@ class ReminderOptionContainer(qw.QWidget):
         self.reminder_options = reminders.reminder_option_dict[reminder_name]()
         self.layout.addWidget(self.reminder_options, QtCore.Qt.AlignTop)
 
+    def getData(self):
+        reminder_settings = self.reminder_options.getData()
+        return reminder_settings
+
     def getReminder(self):
         reminder = self.reminder_options.getReminder()
         return reminder
@@ -128,6 +143,11 @@ class IntervalOptions(qw.QWidget):
         self.layout.addRow(self.duration_label, self.duration_input)
         self.layout.addRow(self.reminder_label)
         self.layout.addRow(self.reminder_options)
+
+    def getData(self):
+        duration = self.duration_input.value()
+        reminder_settings = self.reminder_options.getData()
+        return {'duration': duration, 'options': reminder_settings}
 
     def getInterval(self):
         duration = self.duration_input.value() * 60
@@ -256,6 +276,15 @@ class SessionOptions(qw.QWidget):
                                      break_intervals)
 
         return session_queue
+
+    def serializeData(self):
+        data = dict()
+        data["session_duration"] = self.session_duration.value()
+        data["focus_intervals"] = [focus_widget.getData() for focus_widget in get_children(self.focus_intervals_container)]
+        data["break_intervals"] = [break_widget.getData() for break_widget in get_children(self.break_intervals_container)]
+
+        return data
+
 
 
 # TODO implement me
@@ -417,6 +446,12 @@ class StandUpWindow(qw.QMainWindow):
         # NOTE this does nothing right now
         # TODO implement widget that shows what the session
         self.session_info = SessionInfo()
+
+        # DEBUG for profiles!
+        btn = qw.QPushButton("Test Session Data")
+        btn.clicked.connect(lambda x: print(self.session_options.serializeData()))
+
+        self.start_layout.addWidget(btn)
 
         self.addDockWidget(QtCore.Qt.TopDockWidgetArea, self.session_info)
 
