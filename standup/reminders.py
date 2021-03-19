@@ -18,6 +18,9 @@
         1. loadProfile()      - sets the reminder widgets to values specified
                                  in a user profile.
                                  NOTE: profiles are not implemented yet.
+        1. getData()          - returns a tuple with reminder name and any parameters
+                                 for loading this as a profile. Should be compatible with
+                                 loadProfile()
 
     Reminders must implement one method:
         1. handle()           - This method triggers the actual reminder
@@ -39,6 +42,9 @@ class ReminderOptions(qw.QWidget):
     def initUI(self):
         raise NotImplementedError
 
+    def getData(self):
+        raise NotImplementedError
+
     def loadProfile(self):
         raise NotImplementedError
 
@@ -57,6 +63,12 @@ class NoReminderOptions(ReminderOptions):
     def __init__(self):
         super().__init__()
         #self.setText("No reminder - the next interval will start right away.")
+
+    def getData(self):
+        return {'name': self.name}
+
+    def loadProfile(self, *args, **kwargs):
+        pass
 
     def getReminder(self):
         return None
@@ -113,6 +125,12 @@ class BrowserReminderOptions(ReminderOptions):
         self.layout.addRow(url_label, self.url_input)
         self.layout.addRow(tab_policies)
 
+    def getData(self):
+        data = dict()
+        data["url"] = self.url_input.text()
+        data["policy"] = self.policy_group.checkedId()
+        return data
+
     def getReminder(self):
         url = self.url_input.text()
         policy = self.policy_group.checkedId()
@@ -126,6 +144,9 @@ class RaiseWindowReminderOptions(MessageReminderOptions, ReminderOptions):
     def __init__(self):
         super().__init__()
 
+    def getData(self):
+        return {'name': self.name, 'message': self.message_input.text()}
+
     def getReminder(self):
         message = self.message_input.text()
         return RaiseWindowReminder(message, self.window())
@@ -136,6 +157,9 @@ class MaximizeWindowReminderOptions(MessageReminderOptions, ReminderOptions):
 
     def __init__(self):
         super().__init__()
+
+    def getData(self):
+        return {'name': self.name, 'message': self.message_input.text()}
 
     def getReminder(self):
         message = self.message_input.text()
