@@ -14,25 +14,37 @@ import reminders
 
 # TEMP GLOBAL VARIABLE TO PROFILE FILE
 DEBUG_profile_filename = "./profiles.json"
-def load_profile(profile_name: str):
-    with open(DEBUG_profile_filename, 'a+') as config:
+
+def load_profiles(filename=DEBUG_profile_filename):
+    with open(filename, 'a+') as config:
         config.seek(0)
         try:
             profiles = json.load(config)
         except json.JSONDecodeError:
             profiles = {}
-    profile = profiles.get(profile_name)
+        return profiles
+
+def load_profile(profile_name: str):
+    profile = load_profiles().get(profile_name)
     return profile
 
-def save_profile(profile_name: str, data: dict):
+
+def save_profiles(data):
     with open(DEBUG_profile_filename, 'w+') as config:
-        try:
-            profiles = json.load(config)
-        except json.JSONDecodeError:
-            profiles = {}
-        profiles[profile_name] = data
-        json.dump(profiles, config, indent='  ')
-    return True
+        json.dump(data, config, indent = '  ')
+
+
+def save_profile(profile_name: str, data: dict):
+    profiles = load_profiles()
+    profiles[profile_name] = data
+    save_profiles(profiles)
+
+
+def delete_profile(profile_name):
+    profiles = load_profiles()
+    del profiles[profile_name] # TODO add try-catch
+    save_profiles(profiles)
+
 
 
 def get_children(layout):
@@ -307,20 +319,9 @@ class SessionOptions(qw.QWidget):
     def putData(self, data):
         self.session_duration.setValue(data['session_duration'])
 
-        # Lazy gluttonous way - delete all interval widgets and make new ones
-        # to match the given profile data
-        #self._clearIntervals(self.focus_intervals_container)
-        #self._clearIntervals(self.break_intervals_container)
-        #for interval_data in data['focus_intervals']:
-        #    self.addusInterval(interval_data)
-        #for interval_data in data['break_intervals']:
-        #    self.addBreakInterval(interval_data)
-
         # Less lazy method
         # Reuse as many IntervalOptions widgets as possible
         diff = len(data['focus_intervals']) - self.focus_intervals_container.count()
-        print(len(data['focus_intervals']), self.focus_intervals_container.count())
-        print(diff)
         if diff < 0:
             for _ in range(diff, 0):
                 self.removeIntervals(self.focus_intervals_container, abs(diff))
@@ -439,6 +440,71 @@ class TimerWidget(qw.QWidget):
             self.progress_ring.setValue(self.progress_ring.value() + 1)
 
 
+class ProfileSelect(qw.QWidget):
+
+    profileChanged = QtCore.Signal(str)
+    createProfile = QtCore.Signal(str)
+    updateProfile = QtCore.Signal(str)
+    deleteProfile = QtCore.Signal(str)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        #self._filename = filename
+        self.initUI()
+
+    def initUI(self):
+        self.layout = qw.QHBoxLayout(self)
+
+        self.profile_select = qw.QComboBox()
+        self.profile_select.currentTextChanged.connect(self.profileSelected)
+
+        for profile_name in load_profiles().keys():
+            self.profile_select.addItem(profile_name)
+
+        update_profile = qw.QPushButton('Save Profile')
+        update_profile.clicked.connect(lambda _: self.updateProfile.emit(self.profile_select.currentText()))
+
+        save_new_profile = qw.QPushButton('Save As New Profile')
+        save_new_profile.clicked.connect(self.saveNewProfileClicked)
+
+        delete_current_profile = qw.QPushButton('Delete Profile')
+        delete_current_profile.clicked.connect(self.deleteProfileClicked)
+
+        self.layout.addWidget(self.profile_select)
+        self.layout.addWidget(update_profile)
+        self.layout.addWidget(save_new_profile)
+        self.layout.addWidget(delete_current_profile)
+
+        self.profile_select.setCurrentIndex(-1)
+
+    def profileSelected(self, name):
+        if name:
+            self.profileChanged.emit(name)
+
+    def getUniqueProfileName(self):
+        taken_names = [profile_name.lower() for profile_name in load_profiles().keys()]
+        valid_name = False
+        name = None
+        while not valid_name:
+            name, ok_clicked = qw.QInputDialog.getText(self, "New Profile", "Profile Name")
+            valid_name = name and name.lower() not in taken_names and ok_clicked
+            if not ok_clicked:
+                break
+        return name if valid_name else None
+
+    def saveNewProfileClicked(self, *args):
+        new_name = self.getUniqueProfileName()
+        self.createProfile.emit(new_name)
+        self.profile_select.addItem(new_name)
+        self.profile_select.setCurrentText(new_name)
+
+    def deleteProfileClicked(self, *args):
+        deleted_name = self.profile_select.currentText()
+        index_to_remove = self.profile_select.currentIndex()
+        self.profile_select.setCurrentIndex(-1)
+        self.profile_select.removeItem(index_to_remove)
+        self.deleteProfile.emit(deleted_name)
+
 
 class StandUpWindow(qw.QMainWindow):
     def __init__(self):
@@ -463,6 +529,12 @@ class StandUpWindow(qw.QMainWindow):
         self.title = qw.QLabel('Stand Up',
                                alignment=QtCore.Qt.AlignCenter)
 
+        self.profile_select = ProfileSelect()
+        self.profile_select.profileChanged.connect(self.loadProfile)
+        self.profile_select.createProfile.connect(self.saveProfile)
+        self.profile_select.updateProfile.connect(self.saveProfile)
+        self.profile_select.deleteProfile.connect(self.deleteProfile)
+
         self.session_instruction = qw.QLabel('Session Options',
                                              alignment=QtCore.Qt.AlignCenter)
 
@@ -472,6 +544,7 @@ class StandUpWindow(qw.QMainWindow):
         self.start_session_button.clicked.connect(self.start_session)
 
         self.start_layout.addWidget(self.title, 0, QtCore.Qt.AlignCenter)
+        self.start_layout.addWidget(self.profile_select, 0, QtCore.Qt.AlignCenter)
         self.start_layout.addWidget(self.session_instruction, 0, QtCore.Qt.AlignCenter)
         self.start_layout.addWidget(self.session_options, 1, QtCore.Qt.AlignTop)
         self.start_layout.addWidget(self.start_session_button, QtCore.Qt.AlignTop)
@@ -501,26 +574,18 @@ class StandUpWindow(qw.QMainWindow):
         # TODO implement widget that shows what the session
         self.session_info = SessionInfo()
 
-        # DEBUG for profiles!
-        # TODO remove these!
-        printbtn = qw.QPushButton("Test Session Data")
-        printbtn.clicked.connect(lambda x: print(self.session_options.serializeData()))
-        self.start_layout.addWidget(printbtn)
-
-        savebtn = qw.QPushButton("Save Session Data in JSON file")
-        savebtn.clicked.connect(lambda x: save_profile("test_profile", self.session_options.serializeData()))
-        self.start_layout.addWidget(savebtn)
-
-        readbtn = qw.QPushButton("Read Test Profile")
-        readbtn.clicked.connect(lambda x: print(load_profile('test_profile')))
-        self.start_layout.addWidget(readbtn)
-
-        loadbtn = qw.QPushButton("Load Profile")
-        loadbtn.clicked.connect(lambda x: self.session_options.putData(load_profile('test_profile')))
-        self.start_layout.addWidget(loadbtn)
-
         self.addDockWidget(QtCore.Qt.TopDockWidgetArea, self.session_info)
 
+    def loadProfile(self, profile_name):
+        profile = load_profile(profile_name)
+        self.session_options.putData(profile)
+
+    def saveProfile(self, profile_name):
+        profile = self.session_options.serializeData()
+        save_profile(profile_name, profile)
+
+    def deleteProfile(self, profile_name):
+        delete_profile(profile_name)
 
     def start_next_interval(self):
         self.is_break, self.interval_duration, self.reminder = self.session_queue.get_next_interval()
