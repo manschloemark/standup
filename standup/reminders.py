@@ -15,8 +15,8 @@
     ReminderOptions should implement two methods:
         1. getReminder()      - returns a new Reminder object with the input
                                  given.
-        1. loadProfile()      - sets the reminder widgets to values specified
-                                 in a user profile.
+        1. putData()          - sets the reminder widgets to values specified
+                                 from a user profile.
                                  NOTE: profiles are not implemented yet.
         1. getData()          - returns a tuple with reminder name and any parameters
                                  for loading this as a profile. Should be compatible with
@@ -45,7 +45,7 @@ class ReminderOptions(qw.QWidget):
     def getData(self):
         raise NotImplementedError
 
-    def loadProfile(self):
+    def putData(self):
         raise NotImplementedError
 
     def getReminder(self):
@@ -67,7 +67,7 @@ class NoReminderOptions(ReminderOptions):
     def getData(self):
         return {'name': self.name}
 
-    def loadProfile(self, *args, **kwargs):
+    def putData(self, *args, **kwargs):
         pass
 
     def getReminder(self):
@@ -127,9 +127,14 @@ class BrowserReminderOptions(ReminderOptions):
 
     def getData(self):
         data = dict()
+        data['name'] = self.name
         data["url"] = self.url_input.text()
         data["policy"] = self.policy_group.checkedId()
         return data
+
+    def putData(self, data):
+        self.url_input.setText(data['url'])
+        self.policy_group.button(data['policy']).setChecked(True)
 
     def getReminder(self):
         url = self.url_input.text()
@@ -139,13 +144,16 @@ class BrowserReminderOptions(ReminderOptions):
 
 
 class RaiseWindowReminderOptions(MessageReminderOptions, ReminderOptions):
-    name = "Raise StandUp Window"
+    name = "Raise Window"
 
     def __init__(self):
         super().__init__()
 
     def getData(self):
         return {'name': self.name, 'message': self.message_input.text()}
+
+    def putData(self, data):
+        self.message_input.setText(data['message'])
 
     def getReminder(self):
         message = self.message_input.text()
@@ -153,13 +161,16 @@ class RaiseWindowReminderOptions(MessageReminderOptions, ReminderOptions):
 
 
 class MaximizeWindowReminderOptions(MessageReminderOptions, ReminderOptions):
-    name = "Maximize Standup Window"
+    name = "Maximize Window"
 
     def __init__(self):
         super().__init__()
 
     def getData(self):
         return {'name': self.name, 'message': self.message_input.text()}
+
+    def putData(self, data):
+        self.message_input.setText(data['message'])
 
     def getReminder(self):
         message = self.message_input.text()

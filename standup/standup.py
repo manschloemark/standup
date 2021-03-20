@@ -1,6 +1,7 @@
 """
     GUI application to plan work sessions with focus and break intervals.
 """
+import json
 
 import webbrowser
 
@@ -14,18 +15,29 @@ import reminders
 # TEMP GLOBAL VARIABLE TO PROFILE FILE
 DEBUG_profile_filename = "./profiles.json"
 def load_profile(profile_name: str):
-    with open(DEBUG_profile_filename) as config:
-        json_load = json.load(config)
-        profile = json_load
+    with open(DEBUG_profile_filename, 'a+') as config:
+        config.seek(0)
+        try:
+            profiles = json.load(config)
+        except json.JSONDecodeError:
+            profiles = {}
+    profile = profiles.get(profile_name)
+    return profile
 
 def save_profile(profile_name: str, data: dict):
-    return None
+    with open(DEBUG_profile_filename, 'w+') as config:
+        try:
+            profiles = json.load(config)
+        except json.JSONDecodeError:
+            profiles = {}
+        profiles[profile_name] = data
+        json.dump(profiles, config, indent='  ')
+    return True
 
 
 def get_children(layout):
     """
-        Generator to get all widgets from a layout without relying on
-        the children() method
+        Generator to get all widgets from a layout.
     """
     index = 0
     count = layout.count()
@@ -121,6 +133,10 @@ class ReminderOptionContainer(qw.QWidget):
         reminder_settings = self.reminder_options.getData()
         return reminder_settings
 
+    def putData(self, data):
+        self.reminder_select.setCurrentText(data['name'])
+        self.reminder_options.putData(data)
+
     def getReminder(self):
         reminder = self.reminder_options.getReminder()
         return reminder
@@ -147,7 +163,11 @@ class IntervalOptions(qw.QWidget):
     def getData(self):
         duration = self.duration_input.value()
         reminder_settings = self.reminder_options.getData()
-        return {'duration': duration, 'options': reminder_settings}
+        return {'duration': duration, 'reminder': reminder_settings}
+
+    def putData(self, data):
+        self.duration_input.setValue(data['duration'])
+        self.reminder_options.putData(data['reminder'])
 
     def getInterval(self):
         duration = self.duration_input.value() * 60
@@ -195,7 +215,7 @@ class SessionOptions(qw.QWidget):
         self.add_focus_interval = qw.QPushButton('+')
         self.add_focus_interval.clicked.connect(self.addFocusInterval)
         self.remove_focus_interval = qw.QPushButton('-')
-        self.remove_focus_interval.clicked.connect(self.removeFocusInterval)
+        self.remove_focus_interval.clicked.connect(lambda x: self.removeIntervals(self.focus_intervals_container))
 
         focus_button_container.addWidget(self.add_focus_interval, 0)
         focus_button_container.addWidget(self.remove_focus_interval, 0)
@@ -204,7 +224,7 @@ class SessionOptions(qw.QWidget):
         self.add_break_interval = qw.QPushButton('+')
         self.add_break_interval.clicked.connect(self.addBreakInterval)
         self.remove_break_interval = qw.QPushButton('-')
-        self.remove_break_interval.clicked.connect(self.removeBreakInterval)
+        self.remove_break_interval.clicked.connect(lambda x: self.removeIntervals(self.break_intervals_container))
 
         break_button_container.addWidget(self.add_break_interval, 0)
         break_button_container.addWidget(self.remove_break_interval, 0)
@@ -221,7 +241,7 @@ class SessionOptions(qw.QWidget):
         self.layout.addWidget(self.session_duration, 0, 1)
         self.layout.addWidget(self.interval_options_container, 1, 0, 1, 2)
 
-    def addFocusInterval(self, *args):
+    def addFocusInterval(self):
         new_widget = IntervalOptions(self.reminder_options)
         new_widget.setAutoFillBackground(True)
         palette = new_widget.palette()
@@ -235,7 +255,7 @@ class SessionOptions(qw.QWidget):
 
         self.focus_intervals_container.addWidget(new_widget)
 
-    def addBreakInterval(self, *args):
+    def addBreakInterval(self):
         new_widget = IntervalOptions(self.reminder_options)
         new_widget.setAutoFillBackground(True)
         palette = new_widget.palette()
@@ -250,15 +270,14 @@ class SessionOptions(qw.QWidget):
         self.break_intervals_container.addWidget(new_widget)
 
 
-    def removeFocusInterval(self, *args):
-        count = self.focus_intervals_container.count()
-        if count > 1:
-            self.focus_intervals_container.itemAt(count - 1).widget().deleteLater()
+    def removeIntervals(self, container, num_removing = 1):
+        count = container.count()
+        for offset in range(min(count - 1, num_removing)):
+            container.itemAt(count - offset - 1).widget().deleteLater()
 
-    def removeBreakInterval(self, *args):
-        count = self.break_intervals_container.count()
-        if count > 1:
-            self.break_intervals_container.itemAt(count - 1).widget().deleteLater()
+    def _clearIntervals(self, container):
+        for index in range(container.count(), 0, -1):
+            container.itemAt((index) - 1).widget().deleteLater()
 
     def get_session_queue(self):
         session_duration = self.session_duration.value() * 60
@@ -285,6 +304,41 @@ class SessionOptions(qw.QWidget):
 
         return data
 
+    def putData(self, data):
+        self.session_duration.setValue(data['session_duration'])
+
+        # Lazy gluttonous way - delete all interval widgets and make new ones
+        # to match the given profile data
+        #self._clearIntervals(self.focus_intervals_container)
+        #self._clearIntervals(self.break_intervals_container)
+        #for interval_data in data['focus_intervals']:
+        #    self.addusInterval(interval_data)
+        #for interval_data in data['break_intervals']:
+        #    self.addBreakInterval(interval_data)
+
+        # Less lazy method
+        # Reuse as many IntervalOptions widgets as possible
+        diff = len(data['focus_intervals']) - self.focus_intervals_container.count()
+        print(len(data['focus_intervals']), self.focus_intervals_container.count())
+        print(diff)
+        if diff < 0:
+            for _ in range(diff, 0):
+                self.removeIntervals(self.focus_intervals_container, abs(diff))
+        elif diff > 0:
+            for _ in range(0, diff):
+                self.addFocusInterval()
+        for index, focus_interval in enumerate(data['focus_intervals']):
+            self.focus_intervals_container.itemAt(index).widget().putData(focus_interval)
+
+        diff = len(data['break_intervals']) - self.break_intervals_container.count()
+        if diff < 0:
+            for _ in range(abs(diff)):
+                self.removeIntervals(self.break_intervals_container, abs(diff))
+        elif diff > 0:
+            for _ in range(diff):
+                self.addBreakInterval()
+        for index, break_interval in enumerate(data['break_intervals']):
+            self.break_intervals_container.itemAt(index).widget().putData(break_interval)
 
 
 # TODO implement me
@@ -448,10 +502,22 @@ class StandUpWindow(qw.QMainWindow):
         self.session_info = SessionInfo()
 
         # DEBUG for profiles!
-        btn = qw.QPushButton("Test Session Data")
-        btn.clicked.connect(lambda x: print(self.session_options.serializeData()))
+        # TODO remove these!
+        printbtn = qw.QPushButton("Test Session Data")
+        printbtn.clicked.connect(lambda x: print(self.session_options.serializeData()))
+        self.start_layout.addWidget(printbtn)
 
-        self.start_layout.addWidget(btn)
+        savebtn = qw.QPushButton("Save Session Data in JSON file")
+        savebtn.clicked.connect(lambda x: save_profile("test_profile", self.session_options.serializeData()))
+        self.start_layout.addWidget(savebtn)
+
+        readbtn = qw.QPushButton("Read Test Profile")
+        readbtn.clicked.connect(lambda x: print(load_profile('test_profile')))
+        self.start_layout.addWidget(readbtn)
+
+        loadbtn = qw.QPushButton("Load Profile")
+        loadbtn.clicked.connect(lambda x: self.session_options.putData(load_profile('test_profile')))
+        self.start_layout.addWidget(loadbtn)
 
         self.addDockWidget(QtCore.Qt.TopDockWidgetArea, self.session_info)
 
