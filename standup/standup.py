@@ -455,27 +455,28 @@ class ProfileSelect(qw.QWidget):
     def initUI(self):
         self.layout = qw.QHBoxLayout(self)
 
-        self.profile_select = qw.QComboBox()
-        self.profile_select.currentTextChanged.connect(self.profileSelected)
+        self.profile_dropdown = qw.QComboBox()
+        self.profile_dropdown.setPlaceholderText('-- Load Profile --')
+        self.profile_dropdown.currentTextChanged.connect(self.profileSelected)
 
         for profile_name in load_profiles().keys():
-            self.profile_select.addItem(profile_name)
+            self.profile_dropdown.addItem(profile_name)
 
-        update_profile = qw.QPushButton('Save Profile')
-        update_profile.clicked.connect(lambda _: self.updateProfile.emit(self.profile_select.currentText()))
+        update_profile = qw.QPushButton('Overwrite')
+        update_profile.clicked.connect(lambda _: self.updateProfile.emit(self.profile_dropdown.currentText()))
 
-        save_new_profile = qw.QPushButton('Save As New Profile')
+        save_new_profile = qw.QPushButton('Save New')
         save_new_profile.clicked.connect(self.saveNewProfileClicked)
 
-        delete_current_profile = qw.QPushButton('Delete Profile')
+        delete_current_profile = qw.QPushButton('Delete')
         delete_current_profile.clicked.connect(self.deleteProfileClicked)
 
-        self.layout.addWidget(self.profile_select)
-        self.layout.addWidget(update_profile)
-        self.layout.addWidget(save_new_profile)
-        self.layout.addWidget(delete_current_profile)
+        self.layout.addWidget(self.profile_dropdown, 2)
+        self.layout.addWidget(update_profile, 1)
+        self.layout.addWidget(save_new_profile, 1)
+        self.layout.addWidget(delete_current_profile, 1)
 
-        self.profile_select.setCurrentIndex(-1)
+        self.profile_dropdown.setCurrentIndex(-1)
 
     def profileSelected(self, name):
         if name:
@@ -495,14 +496,14 @@ class ProfileSelect(qw.QWidget):
     def saveNewProfileClicked(self, *args):
         new_name = self.getUniqueProfileName()
         self.createProfile.emit(new_name)
-        self.profile_select.addItem(new_name)
-        self.profile_select.setCurrentText(new_name)
+        self.profile_dropdown.addItem(new_name)
+        self.profile_dropdown.setCurrentText(new_name)
 
     def deleteProfileClicked(self, *args):
-        deleted_name = self.profile_select.currentText()
-        index_to_remove = self.profile_select.currentIndex()
-        self.profile_select.setCurrentIndex(-1)
-        self.profile_select.removeItem(index_to_remove)
+        deleted_name = self.profile_dropdown.currentText()
+        index_to_remove = self.profile_dropdown.currentIndex()
+        self.profile_dropdown.setCurrentIndex(-1)
+        self.profile_dropdown.removeItem(index_to_remove)
         self.deleteProfile.emit(deleted_name)
 
 
