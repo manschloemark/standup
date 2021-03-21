@@ -209,16 +209,24 @@ class SessionOptions(qw.QWidget):
         focus_label = qw.QLabel("Focus Intervals")
         break_label = qw.QLabel("Break Intervals")
 
+        focus_interval_scroll = qw.QScrollArea()
+        focus_interval_scroll.setWidgetResizable(True)
+        focus_interval_scroll.setSizePolicy(qw.QSizePolicy.Expanding, qw.QSizePolicy.Expanding)
         focus_interval_frame = qw.QFrame()
         focus_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
         self.focus_intervals_container = qw.QVBoxLayout(focus_interval_frame)
+        focus_interval_scroll.setWidget(focus_interval_frame)
         self.addFocusInterval()
         #default_focus_option = IntervalOptions(self.reminder_options)
         #self.focus_intervals_container.addWidget(default_focus_option)
 
+        break_interval_scroll = qw.QScrollArea()
+        break_interval_scroll.setWidgetResizable(True)
+        break_interval_scroll.setSizePolicy(qw.QSizePolicy.Expanding, qw.QSizePolicy.Expanding)
         break_interval_frame = qw.QFrame()
         break_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
         self.break_intervals_container = qw.QVBoxLayout(break_interval_frame)
+        break_interval_scroll.setWidget(break_interval_frame)
         self.addBreakInterval()
         #default_break_option = IntervalOptions(self.reminder_options)
         #self.break_intervals_container.addWidget(default_break_option)
@@ -244,14 +252,18 @@ class SessionOptions(qw.QWidget):
         self.interval_options_grid.addWidget(focus_label, 0, 0)
         self.interval_options_grid.addWidget(break_label, 0, 1)
 
-        self.interval_options_grid.addWidget(focus_interval_frame, 1, 0, 2, 1)
-        self.interval_options_grid.addWidget(break_interval_frame, 1, 1, 2, 1)
-        self.interval_options_grid.addLayout(focus_button_container, 3, 0)
-        self.interval_options_grid.addLayout(break_button_container, 3, 1)
+        self.interval_options_grid.addWidget(focus_interval_scroll, 1, 0)
+        self.interval_options_grid.addWidget(break_interval_scroll, 1, 1)
+        self.interval_options_grid.addLayout(focus_button_container, 2, 0)
+        self.interval_options_grid.addLayout(break_button_container, 2, 1)
+
+        self.interval_options_grid.setRowStretch(1, 1)
 
         self.layout.addWidget(self.session_dur_label, 0, 0)
         self.layout.addWidget(self.session_duration, 0, 1)
         self.layout.addWidget(self.interval_options_container, 1, 0, 1, 2)
+
+        self.layout.setRowStretch(1, 1)
 
     def addFocusInterval(self):
         new_widget = IntervalOptions(self.reminder_options)
@@ -547,8 +559,8 @@ class StandUpWindow(qw.QMainWindow):
         self.start_layout.addWidget(self.title, 0, QtCore.Qt.AlignCenter)
         self.start_layout.addWidget(self.profile_select, 0, QtCore.Qt.AlignCenter)
         self.start_layout.addWidget(self.session_instruction, 0, QtCore.Qt.AlignCenter)
-        self.start_layout.addWidget(self.session_options, 1, QtCore.Qt.AlignTop)
-        self.start_layout.addWidget(self.start_session_button, QtCore.Qt.AlignTop)
+        self.start_layout.addWidget(self.session_options, 1)
+        self.start_layout.addWidget(self.start_session_button, 0, QtCore.Qt.AlignTop)
 
         # Set up timer screen
         self.timer_widget = TimerWidget()
