@@ -9,7 +9,7 @@
     ReminderOptions are widgets that allow the user to set options specific
     to the Reminder
 
-    ReminderOption subclasses should set the name attribute to something
+    ReminderOption subclasses should set the name attribute to a short descriptive string
     appropriate for a QComboBox - this is what the user sees and picks from
 
     ReminderOptions should implement two methods:
