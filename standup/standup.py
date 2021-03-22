@@ -465,7 +465,7 @@ class ProfileSelect(qw.QWidget):
 
         update_profile = qw.QPushButton("Overwrite")
         update_profile.clicked.connect(
-            lambda _: self.updateProfile.emit(self.profile_dropdown.currentText())
+                self.overwriteProfileClicked
         )
 
         save_new_profile = qw.QPushButton("Save New")
@@ -493,7 +493,7 @@ class ProfileSelect(qw.QWidget):
             name, ok_clicked = qw.QInputDialog.getText(
                 self, "New Profile", "Profile Name"
             )
-            valid_name = name and name.lower() not in taken_names and ok_clicked
+            valid_name = name and name.strip() and name.lower() not in taken_names and ok_clicked
             if not ok_clicked:
                 break
         return name if valid_name else None
@@ -503,6 +503,11 @@ class ProfileSelect(qw.QWidget):
         self.createProfile.emit(new_name)
         self.profile_dropdown.addItem(new_name)
         self.profile_dropdown.setCurrentText(new_name)
+
+    def overwriteProfileClicked(self, *args):
+        profile_name = self.profile_dropdown.currentText()
+        if not profile_name and profile_name.strip():
+            self.updateProfile.emit(profile_name)
 
     def deleteProfileClicked(self, *args):
         deleted_name = self.profile_dropdown.currentText()
