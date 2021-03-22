@@ -33,6 +33,7 @@ from PySide6.QtCore import Qt
 
 ### BASE CLASSES ###
 
+
 class ReminderOptions(qw.QWidget):
     name = "Base Class"
 
@@ -52,20 +53,23 @@ class ReminderOptions(qw.QWidget):
         raise NotImplementedError
 
     def __repr__(self):
-        return f'{self.__class__.__name__}: {dir(self)}'
+        return f"{self.__class__.__name__}: {dir(self)}"
+
 
 class NoReminderOptions(ReminderOptions):
     """
-        This is for a reminder that does nothing and starts the next interval immediately
-        getReminder returns None so the StandUp app can handle it by truthiness check.
+    This is for a reminder that does nothing and starts the next interval immediately
+    getReminder returns None so the StandUp app can handle it by truthiness check.
     """
+
     name = "None"
+
     def __init__(self):
         super().__init__()
-        #self.setText("No reminder - the next interval will start right away.")
+        # self.setText("No reminder - the next interval will start right away.")
 
     def getData(self):
-        return {'name': self.name}
+        return {"name": self.name}
 
     def putData(self, *args, **kwargs):
         pass
@@ -73,8 +77,10 @@ class NoReminderOptions(ReminderOptions):
     def getReminder(self):
         return None
 
+
 class MessageReminderOptions(qw.QWidget):
     """ Since multiple ReminderOptions subclasses just accept simple messages for their reminders I am making this it's own class that those other reminders will inherit. """
+
     name = "Abstract Base Class"
 
     def __init__(self):
@@ -127,20 +133,19 @@ class BrowserReminderOptions(ReminderOptions):
 
     def getData(self):
         data = dict()
-        data['name'] = self.name
+        data["name"] = self.name
         data["url"] = self.url_input.text()
         data["policy"] = self.policy_group.checkedId()
         return data
 
     def putData(self, data):
-        self.url_input.setText(data['url'])
-        self.policy_group.button(data['policy']).setChecked(True)
+        self.url_input.setText(data["url"])
+        self.policy_group.button(data["policy"]).setChecked(True)
 
     def getReminder(self):
         url = self.url_input.text()
         policy = self.policy_group.checkedId()
         return BrowserReminder(url, policy)
-
 
 
 class RaiseWindowReminderOptions(MessageReminderOptions, ReminderOptions):
@@ -150,10 +155,10 @@ class RaiseWindowReminderOptions(MessageReminderOptions, ReminderOptions):
         super().__init__()
 
     def getData(self):
-        return {'name': self.name, 'message': self.message_input.text()}
+        return {"name": self.name, "message": self.message_input.text()}
 
     def putData(self, data):
-        self.message_input.setText(data['message'])
+        self.message_input.setText(data["message"])
 
     def getReminder(self):
         message = self.message_input.text()
@@ -167,10 +172,10 @@ class MaximizeWindowReminderOptions(MessageReminderOptions, ReminderOptions):
         super().__init__()
 
     def getData(self):
-        return {'name': self.name, 'message': self.message_input.text()}
+        return {"name": self.name, "message": self.message_input.text()}
 
     def putData(self, data):
-        self.message_input.setText(data['message'])
+        self.message_input.setText(data["message"])
 
     def getReminder(self):
         message = self.message_input.text()
@@ -182,11 +187,12 @@ class Reminder:
         raise NotImplementedError
 
     def __repr__(self):
-        return f'{self.__class__.__name__}()'
+        return f"{self.__class__.__name__}()"
 
 
 class BrowserReminder(Reminder):
     message = "Opening URL..."
+
     def __init__(self, url, policy):
         self.url = url
         self.policy = policy
@@ -204,9 +210,11 @@ class RaiseWindowReminder(Reminder):
     def handle(self):
         # NOTE: There is a chance this doesn't work on Windows or Mac.
         # Or maybe even window managers other than X11
-        self.window.setWindowState(self.window.windowState() &
-                                   ~Qt.WindowMinimized | Qt.WindowActive)
+        self.window.setWindowState(
+            self.window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive
+        )
         self.window.activateWindow()
+
 
 class MaximizeWindowReminder(Reminder):
     def __init__(self, message, window):
@@ -218,6 +226,7 @@ class MaximizeWindowReminder(Reminder):
         self.window.setWindowState(Qt.WindowMaximized)
         self.window.activateWindow()
 
-reminder_option_dict = {subclass.name: subclass for subclass in ReminderOptions.__subclasses__()}
 
-
+reminder_option_dict = {
+    subclass.name: subclass for subclass in ReminderOptions.__subclasses__()
+}

@@ -10,16 +10,16 @@ from PySide6 import QtGui, QtCore, QtWidgets
 
 
 class QProgressRing(QtWidgets.QWidget):
-    _TOTAL_DEGREES = 360 * 16 # I'm not satisfied with this name
-                              # but this variable exists because
-                              # QtGui.QPainter.drawArc can draw
-                              # to 1/16 degrees
-                              # Meaning there are 360 * 16 possible values
+    _TOTAL_DEGREES = 360 * 16  # I'm not satisfied with this name
+    # but this variable exists because
+    # QtGui.QPainter.drawArc can draw
+    # to 1/16 degrees
+    # Meaning there are 360 * 16 possible values
 
-    _ARC_OFFSET = 90 * 16     # This variable is used to offset the arc
-                              # since I want the progress ring
-                              # to start that the 12 o'clock position (90deg)
-                              # TODO make this easily adjustable
+    _ARC_OFFSET = 90 * 16  # This variable is used to offset the arc
+    # since I want the progress ring
+    # to start that the 12 o'clock position (90deg)
+    # TODO make this easily adjustable
     complete = QtCore.Signal()
 
     def __init__(self):
@@ -29,9 +29,11 @@ class QProgressRing(QtWidgets.QWidget):
         self._maximum = 0
         self._value = 0
         self._clockwise = True
-        self._format = '%'
+        self._format = "%"
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         self.calcRadius(self.rect().size())
         self.calcSquare(self.rect().center())
 
@@ -82,33 +84,34 @@ class QProgressRing(QtWidgets.QWidget):
 
     def getFormattedText(self):
         if self._value == self._maximum:
-            return 'Done!'
-        if self._format == '%':
-            return f'{self.percentComplete()}%'
-        elif self._format == 'countdown':
+            return "Done!"
+        if self._format == "%":
+            return f"{self.percentComplete()}%"
+        elif self._format == "countdown":
             m, s = divmod(self.remaining(), 60)
             h, m = divmod(m, 60)
             if h:
-                time_string = f'{h:0>2}h {m:0>2}m {s:0>2}s'
+                time_string = f"{h:0>2}h {m:0>2}m {s:0>2}s"
             elif m:
-                time_string = f'{m:0>2}m {s:0>2}s'
+                time_string = f"{m:0>2}m {s:0>2}s"
             else:
-                time_string = f'{s:0>2}s'
+                time_string = f"{s:0>2}s"
             return time_string
 
     def calcSquare(self, center):
-        self._square = QtCore.QRect(center -
-                                   QtCore.QPoint(self._radius, self._radius),
-                                   center +
-                                   QtCore.QPoint( self._radius, self._radius))
+        self._square = QtCore.QRect(
+            center - QtCore.QPoint(self._radius, self._radius),
+            center + QtCore.QPoint(self._radius, self._radius),
+        )
 
     def calcRadius(self, size):
         new_radius = min(size.width(), size.height())
         self._radius = int((new_radius * 0.4))
 
     def drawOutline(self, qp):
-        circle_pen = QtGui.QPen(self._palette.color(QtGui.QPalette.Active,
-                                                    QtGui.QPalette.Midlight))
+        circle_pen = QtGui.QPen(
+            self._palette.color(QtGui.QPalette.Active, QtGui.QPalette.Midlight)
+        )
         circle_pen.setWidth(8)
 
         qp.setBrush(self._palette.brush(QtGui.QPalette.Active, QtGui.QPalette.Mid))
@@ -120,7 +123,9 @@ class QProgressRing(QtWidgets.QWidget):
         if not self._maximum:
             return
 
-        progress_pen = QtGui.QPen(self._palette.color(QtGui.QPalette.Active, QtGui.QPalette.Link))
+        progress_pen = QtGui.QPen(
+            self._palette.color(QtGui.QPalette.Active, QtGui.QPalette.Link)
+        )
 
         progress_pen.setWidth(12)
         progress_pen.setCapStyle(QtCore.Qt.RoundCap)
@@ -130,20 +135,30 @@ class QProgressRing(QtWidgets.QWidget):
         if self._value == self._maximum:
             qp.drawEllipse(self._square)
         else:
-            percent_complete = (self._value - self._minimum) / (self._maximum - self._minimum)
+            percent_complete = (self._value - self._minimum) / (
+                self._maximum - self._minimum
+            )
             arc_span = (self._TOTAL_DEGREES) * percent_complete
             if self._clockwise:
                 arc_span *= -1
             qp.drawArc(self._square, self._ARC_OFFSET, arc_span)
 
     def drawText(self, qp):
-        qp.setPen(QtGui.QPen(self._palette.color(QtGui.QPalette.Active, QtGui.QPalette.WindowText)))
+        qp.setPen(
+            QtGui.QPen(
+                self._palette.color(QtGui.QPalette.Active, QtGui.QPalette.WindowText)
+            )
+        )
 
-        qp.setBrush(self._palette.brush(QtGui.QPalette.Active, QtGui.QPalette.WindowText))
+        qp.setBrush(
+            self._palette.brush(QtGui.QPalette.Active, QtGui.QPalette.WindowText)
+        )
 
-        timer_font = QtGui.QFont('monospace')
+        timer_font = QtGui.QFont("monospace")
         timer_font.setStyleHint(QtGui.QFont.Monospace)
-        timer_font.setPointSize(12) # TODO make this not hardcoded or change based on size of widget?
+        timer_font.setPointSize(
+            12
+        )  # TODO make this not hardcoded or change based on size of widget?
 
         qp.setFont(timer_font)
         qp.drawText(self._square, QtCore.Qt.AlignCenter, self.getFormattedText())
@@ -166,10 +181,12 @@ class QProgressRing(QtWidgets.QWidget):
         self.calcRadius(resize_event.size())
         self.calcSquare(self.rect().center())
 
+
 # Testing
 if __name__ == "__main__":
     import sys
     import time
+
     app = QtWidgets.QApplication([])
     ex = QtWidgets.QWidget()
     l = QtWidgets.QVBoxLayout(ex)
