@@ -12,7 +12,7 @@ from PySide6 import QtCore, QtGui
 from QProgressRing import QProgressRing
 import reminders
 
-# TEMP GLOBAL VARIABLE TO PROFILE FILE
+# TEMP GLOBAL VARIABLE TO PROFILE
 DEBUG_profile_filename = "./profiles.json"
 
 def load_profiles(filename=DEBUG_profile_filename):
@@ -23,6 +23,7 @@ def load_profiles(filename=DEBUG_profile_filename):
         except json.JSONDecodeError:
             profiles = {}
         return profiles
+
 
 def load_profile(profile_name: str):
     profile = load_profiles().get(profile_name)
@@ -42,9 +43,8 @@ def save_profile(profile_name: str, data: dict):
 
 def delete_profile(profile_name):
     profiles = load_profiles()
-    del profiles[profile_name] # TODO add try-catch
+    del profiles[profile_name] # TODO add try-catch? Technically this shouldn't fail but you never know
     save_profiles(profiles)
-
 
 
 def get_children(layout):
@@ -59,8 +59,8 @@ def get_children(layout):
 
 class DurationSpinBox(qw.QSpinBox):
     """
-        This widget provides a user-friendly and intuitive method of
-        entering an amount of time in hours and minutes.
+        Spin box that is made for entering time duration
+        Currently unfinished but it works for now
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -70,13 +70,10 @@ class DurationSpinBox(qw.QSpinBox):
         h, m = divmod(value, 60)
         return f'{h}h {m}m'
 
-# NOTE this doesn't really need to be a class.
-#      Instead I can make a function that returns a deque or queue
 class SessionQueue():
     """
-        Abstracts the work of determining when a session is over
-        and when to repeat the intervals and what not
-        Not sure if this is really necessary, but I figured I'd give it a shot
+        Handles session runtime
+        Iterates through focus and break interval lists
     """
     def __init__(self, total_length, focus_intervals, break_intervals):
         # TODO Implement Me
@@ -122,13 +119,10 @@ class ReminderOptionContainer(qw.QWidget):
 
     def initUI(self):
         self.layout = qw.QVBoxLayout(self)
-        #self.reminder_instruction = qw.QLabel("Reminder Type",
-        #                                      alignment=QtCore.Qt.AlignCenter)
         self.reminder_select = qw.QComboBox()
         self.reminder_select.currentTextChanged.connect(self.reminderSelected)
         self.reminder_options = None
 
-        #self.layout.addWidget(self.reminder_instruction)
         self.layout.addWidget(self.reminder_select, QtCore.Qt.AlignTop)
 
         for reminder_type in reminders.reminder_option_dict.keys():
@@ -190,7 +184,6 @@ class IntervalOptions(qw.QWidget):
 class SessionOptions(qw.QWidget):
     def __init__(self, reminder_options):
         super().__init__()
-        #self._palette = QtGui.QGuiApplication.palette()
         self.reminder_options = reminder_options
         self.init_ui()
 
@@ -202,7 +195,6 @@ class SessionOptions(qw.QWidget):
         self.session_dur_label = qw.QLabel("Session Length:")
         self.session_duration = DurationSpinBox()
 
-        # TODO add controls that let the user make a queue out of these
         self.interval_options_container = qw.QWidget()
         self.interval_options_grid = qw.QGridLayout(self.interval_options_container)
 
@@ -216,9 +208,6 @@ class SessionOptions(qw.QWidget):
         focus_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
         self.focus_intervals_container = qw.QVBoxLayout(focus_interval_frame)
         focus_interval_scroll.setWidget(focus_interval_frame)
-        self.addFocusInterval()
-        #default_focus_option = IntervalOptions(self.reminder_options)
-        #self.focus_intervals_container.addWidget(default_focus_option)
 
         break_interval_scroll = qw.QScrollArea()
         break_interval_scroll.setWidgetResizable(True)
@@ -227,9 +216,6 @@ class SessionOptions(qw.QWidget):
         break_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
         self.break_intervals_container = qw.QVBoxLayout(break_interval_frame)
         break_interval_scroll.setWidget(break_interval_frame)
-        self.addBreakInterval()
-        #default_break_option = IntervalOptions(self.reminder_options)
-        #self.break_intervals_container.addWidget(default_break_option)
 
         focus_button_container = qw.QHBoxLayout()
         self.add_focus_interval = qw.QPushButton('+')
@@ -264,6 +250,9 @@ class SessionOptions(qw.QWidget):
         self.layout.addWidget(self.interval_options_container, 1, 0, 1, 2)
 
         self.layout.setRowStretch(1, 1)
+
+        self.addFocusInterval()
+        self.addBreakInterval()
 
     def addFocusInterval(self):
         new_widget = IntervalOptions(self.reminder_options)
@@ -331,7 +320,6 @@ class SessionOptions(qw.QWidget):
     def putData(self, data):
         self.session_duration.setValue(data['session_duration'])
 
-        # Less lazy method
         # Reuse as many IntervalOptions widgets as possible
         diff = len(data['focus_intervals']) - self.focus_intervals_container.count()
         if diff < 0:
@@ -352,21 +340,6 @@ class SessionOptions(qw.QWidget):
                 self.addBreakInterval()
         for index, break_interval in enumerate(data['break_intervals']):
             self.break_intervals_container.itemAt(index).widget().putData(break_interval)
-
-
-# TODO implement me
-class SessionInfo(qw.QDockWidget):
-    """
-        Widget that shows info about the current session
-    """
-
-    def __init__(self):
-        super().__init__()
-
-        self.initUI()
-
-    def initUI(self):
-        pass
 
 
 class TimerWidget(qw.QWidget):
@@ -454,6 +427,8 @@ class TimerWidget(qw.QWidget):
 
 class ProfileSelect(qw.QWidget):
 
+    # NOTE do I need all of these signals?
+    #      should StandUpWindow just connect to the signals of the buttons directly?
     profileChanged = QtCore.Signal(str)
     createProfile = QtCore.Signal(str)
     updateProfile = QtCore.Signal(str)
@@ -568,8 +543,7 @@ class StandUpWindow(qw.QMainWindow):
 
         self.timer_layout.addWidget(self.timer_widget)
 
-        # Timer End Screen / Transition Screen
-
+        # Set up transition screen
         self.transition_message = qw.QLabel()
         self.continue_button = qw.QPushButton("Next Interval")
         self.continue_button.clicked.connect(self.start_next_interval)
@@ -582,12 +556,6 @@ class StandUpWindow(qw.QMainWindow):
         self.screen_stack.addWidget(self.transition_screen)
 
         self.setCentralWidget(self.screen_stack)
-
-        # NOTE this does nothing right now
-        # TODO implement widget that shows what the session
-        self.session_info = SessionInfo()
-
-        self.addDockWidget(QtCore.Qt.TopDockWidgetArea, self.session_info)
 
     def loadProfile(self, profile_name):
         profile = load_profile(profile_name)
