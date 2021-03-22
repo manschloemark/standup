@@ -120,59 +120,29 @@ class SessionQueue:
         )
 
 
-class ReminderOptionContainer(qw.QWidget):
-    def __init__(self, option_dict):
+class IntervalOptions(qw.QWidget):
+    def __init__(self):
         super().__init__()
-        self.option_dict = option_dict
         self.initUI()
 
     def initUI(self):
-        self.layout = qw.QVBoxLayout(self)
-        self.reminder_select = qw.QComboBox()
-        self.reminder_select.currentTextChanged.connect(self.reminderSelected)
-        self.reminder_options = None
-
-        self.layout.addWidget(self.reminder_select, QtCore.Qt.AlignTop)
-
-        for reminder_type in reminders.reminder_option_dict.keys():
-            self.reminder_select.addItem(reminder_type)
-
-    def reminderSelected(self, reminder_name):
-        if self.reminder_options:
-            self.reminder_options.deleteLater()
-        self.reminder_options = reminders.reminder_option_dict[reminder_name]()
-        self.layout.addWidget(self.reminder_options, QtCore.Qt.AlignTop)
-
-    def getData(self):
-        reminder_settings = self.reminder_options.getData()
-        return reminder_settings
-
-    def putData(self, data):
-        self.reminder_select.setCurrentText(data["name"])
-        self.reminder_options.putData(data)
-
-    def getReminder(self):
-        reminder = self.reminder_options.getReminder()
-        return reminder
-
-
-class IntervalOptions(qw.QWidget):
-    def __init__(self, reminder_dict):
-        super().__init__()
-        self.initUI(reminder_dict)
-
-    def initUI(self, reminder_dict):
         self.layout = qw.QFormLayout(self)
         self.layout.setFieldGrowthPolicy(qw.QFormLayout.FieldsStayAtSizeHint)
         self.layout.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTop)
         self.duration_label = qw.QLabel("Interval Length:")
         self.duration_input = DurationSpinBox()
-        self.reminder_label = qw.QLabel("Reminder")
-        self.reminder_options = ReminderOptionContainer(reminder_dict)
+        self.reminder_label = qw.QLabel("Reminder:")
+        self.reminder_select = qw.QComboBox()
+        self.reminder_select.currentTextChanged.connect(self.reminderSelected)
+        self.reminder_options = None
+
+        for reminder_type in reminders.reminder_option_dict.keys():
+            self.reminder_select.addItem(reminder_type)
 
         self.layout.addRow(self.duration_label, self.duration_input)
-        self.layout.addRow(self.reminder_label)
-        self.layout.addRow(self.reminder_options)
+        self.layout.addRow(self.reminder_label, self.reminder_select)
+
+        self.setSizePolicy(qw.QSizePolicy.Expanding, qw.QSizePolicy.Fixed)
 
     def getData(self):
         duration = self.duration_input.value()
@@ -181,7 +151,14 @@ class IntervalOptions(qw.QWidget):
 
     def putData(self, data):
         self.duration_input.setValue(data["duration"])
+        self.reminder_select.setCurrentText(data["reminder"]["name"])
         self.reminder_options.putData(data["reminder"])
+
+    def reminderSelected(self, reminder_name):
+        if self.reminder_options:
+            self.reminder_options.deleteLater()
+        self.reminder_options = reminders.reminder_option_dict[reminder_name]()
+        self.layout.addRow(self.reminder_options)
 
     def getInterval(self):
         duration = self.duration_input.value() * 60
@@ -190,9 +167,8 @@ class IntervalOptions(qw.QWidget):
 
 
 class SessionOptions(qw.QWidget):
-    def __init__(self, reminder_options):
+    def __init__(self):
         super().__init__()
-        self.reminder_options = reminder_options
         self.init_ui()
 
     def init_ui(self):
@@ -210,6 +186,7 @@ class SessionOptions(qw.QWidget):
         break_label = qw.QLabel("Break Intervals")
 
         focus_interval_scroll = qw.QScrollArea()
+        focus_interval_scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         focus_interval_scroll.setWidgetResizable(True)
         focus_interval_scroll.setSizePolicy(
             qw.QSizePolicy.Expanding, qw.QSizePolicy.Expanding
@@ -217,9 +194,11 @@ class SessionOptions(qw.QWidget):
         focus_interval_frame = qw.QFrame()
         focus_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
         self.focus_intervals_container = qw.QVBoxLayout(focus_interval_frame)
+        self.focus_intervals_container.setAlignment(QtCore.Qt.AlignTop)
         focus_interval_scroll.setWidget(focus_interval_frame)
 
         break_interval_scroll = qw.QScrollArea()
+        break_interval_scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         break_interval_scroll.setWidgetResizable(True)
         break_interval_scroll.setSizePolicy(
             qw.QSizePolicy.Expanding, qw.QSizePolicy.Expanding
@@ -227,6 +206,7 @@ class SessionOptions(qw.QWidget):
         break_interval_frame = qw.QFrame()
         break_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
         self.break_intervals_container = qw.QVBoxLayout(break_interval_frame)
+        self.break_intervals_container.setAlignment(QtCore.Qt.AlignTop)
         break_interval_scroll.setWidget(break_interval_frame)
 
         focus_button_container = qw.QHBoxLayout()
@@ -237,8 +217,9 @@ class SessionOptions(qw.QWidget):
             lambda x: self.removeIntervals(self.focus_intervals_container)
         )
 
-        focus_button_container.addWidget(self.add_focus_interval, 0)
-        focus_button_container.addWidget(self.remove_focus_interval, 0)
+        focus_button_container.addWidget(focus_label)
+        focus_button_container.addWidget(self.add_focus_interval, 0, QtCore.Qt.AlignRight)
+        focus_button_container.addWidget(self.remove_focus_interval, 0, QtCore.Qt.AlignLeft)
 
         break_button_container = qw.QHBoxLayout()
         self.add_break_interval = qw.QPushButton("+")
@@ -248,21 +229,20 @@ class SessionOptions(qw.QWidget):
             lambda x: self.removeIntervals(self.break_intervals_container)
         )
 
-        break_button_container.addWidget(self.add_break_interval, 0)
-        break_button_container.addWidget(self.remove_break_interval, 0)
+        break_button_container.addWidget(break_label)
+        break_button_container.addWidget(self.add_break_interval, 0, QtCore.Qt.AlignRight)
+        break_button_container.addWidget(self.remove_break_interval, 0, QtCore.Qt.AlignLeft)
 
-        self.interval_options_grid.addWidget(focus_label, 0, 0)
-        self.interval_options_grid.addWidget(break_label, 0, 1)
+        self.interval_options_grid.addLayout(focus_button_container, 0, 0, QtCore.Qt.AlignCenter)
+        self.interval_options_grid.addLayout(break_button_container, 0, 1, QtCore.Qt.AlignCenter)
 
         self.interval_options_grid.addWidget(focus_interval_scroll, 1, 0)
         self.interval_options_grid.addWidget(break_interval_scroll, 1, 1)
-        self.interval_options_grid.addLayout(focus_button_container, 2, 0)
-        self.interval_options_grid.addLayout(break_button_container, 2, 1)
 
         self.interval_options_grid.setRowStretch(1, 1)
 
-        self.layout.addWidget(self.session_dur_label, 0, 0)
-        self.layout.addWidget(self.session_duration, 0, 1)
+        self.layout.addWidget(self.session_dur_label, 0, 0, QtCore.Qt.AlignRight)
+        self.layout.addWidget(self.session_duration, 0, 1, QtCore.Qt.AlignLeft)
         self.layout.addWidget(self.interval_options_container, 1, 0, 1, 2)
 
         self.layout.setRowStretch(1, 1)
@@ -271,7 +251,7 @@ class SessionOptions(qw.QWidget):
         self.addBreakInterval()
 
     def addFocusInterval(self):
-        new_widget = IntervalOptions(self.reminder_options)
+        new_widget = IntervalOptions()
         new_widget.setAutoFillBackground(True)
         palette = new_widget.palette()
 
@@ -289,7 +269,7 @@ class SessionOptions(qw.QWidget):
         self.focus_intervals_container.addWidget(new_widget)
 
     def addBreakInterval(self):
-        new_widget = IntervalOptions(self.reminder_options)
+        new_widget = IntervalOptions()
         new_widget.setAutoFillBackground(True)
         palette = new_widget.palette()
 
@@ -564,7 +544,7 @@ class StandUpWindow(qw.QMainWindow):
             "Session Options", alignment=QtCore.Qt.AlignCenter
         )
 
-        self.session_options = SessionOptions(reminders.reminder_option_dict)
+        self.session_options = SessionOptions()
 
         self.start_session_button = qw.QPushButton("Start Session")
         self.start_session_button.clicked.connect(self.start_session)
