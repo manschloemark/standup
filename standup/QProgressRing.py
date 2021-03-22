@@ -20,7 +20,6 @@ class QProgressRing(QtWidgets.QWidget):
                               # since I want the progress ring
                               # to start that the 12 o'clock position (90deg)
                               # TODO make this easily adjustable
-    ### Signals ###
     complete = QtCore.Signal()
 
     def __init__(self):
@@ -35,9 +34,6 @@ class QProgressRing(QtWidgets.QWidget):
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
         self.calcRadius(self.rect().size())
         self.calcSquare(self.rect().center())
-
-        # DEBUG
-        self._rendering = False
 
     def setRadius(self, radius):
         self._radius = radius
@@ -145,7 +141,7 @@ class QProgressRing(QtWidgets.QWidget):
 
         qp.setBrush(self._palette.brush(QtGui.QPalette.Active, QtGui.QPalette.WindowText))
 
-        timer_font = QtGui.QFont('monospace') # Change this to not be hardcoded?
+        timer_font = QtGui.QFont('monospace')
         timer_font.setStyleHint(QtGui.QFont.Monospace)
         timer_font.setPointSize(12) # TODO make this not hardcoded or change based on size of widget?
 
