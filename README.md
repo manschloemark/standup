@@ -25,26 +25,28 @@ Open the directory and run standup.py:
 
 ## How it works
 
-### Set the timers
+### Set timers
 - Session Duration : how long the program will run intervals
   - Set this to 0 to run intervals until you stop it
-- Work Intervals   : how long you work before taking a break
-  - After a work interval ends the program will trigger your selected _reminder_
+- Focus Intervals  : how long you work before taking a break.
 - Break Intervals  : how long your breaks are
-  - After a break interval ends the program will automatically start the next work interval
-  - Set this to 0 if you want to manually start the next work interval
 - Interval Queues  :
   - Break up the monotony with interval queues. Instead of alternating between one focus interval and one break interval you can plan multiple focus and break intervals, each with different reminders and durations to keep things fresh.
   - This feature makes it possible to implement the Pomodoro Technique, for example.
 
 ### Customize reminders
+- Every focus and break interval has a reminder associated with it
 - Reminder Types    : choose what happens at the end of a work interval
+  - No Reminder: nothing will happen after the interval, the program will immediately start the next interval.
   - Open a URL: enter any URL you'd like and the program will open it in your default browser
   - Raise StandUp window: Raise the app's window to the top of your desktop and gives it focus. This will not change the size of the window.
   - Maximize StandUp window: the same as 'Raise StandUp window' but instead makes sure the window is maximized.
 - You can set different reminders for the end of focus and break intervals.
 
 ### That's it!
+
+### Custom Profiles
+- You can save session settings as a profile so you can quickly recreate the session in the future.
 
 ## Learning Outcomes
 - Qt6
@@ -59,11 +61,13 @@ Open the directory and run standup.py:
     - This widget contains a QProgressRing and buttons to control the timer.
     - learned how to use timerEvents and QTimers to make this a breeze.
 - Making the most of inheritance
-  - I'm happy with the way I used classes and inheritance to simplify the creation and use of reminders and reminder widgets.
-  - Base classes for widgets that let users customize reminders (ReminderOptions) and the python objects that actually make the reminders happen (Reminder) make it easy to implement new reminders.
-  - Adding new reminders is as simple as writing a new ReminderOptions and Reminder subclass. The program will automatically add the new reminder to the GUI
+  - I'm happy with the way I used classes and inheritance to make reminders easy to implement.
+  - ReminderOptions subclasses are Qt widgets that let users configure reminders.
+  - Reminder classes are objects that encapsulate the code that make the reminders happen. The StandUp app doesn't need to know about the details of the reminder, it just calls Reminder.handle() to make it happen.
+  - Adding new reminders is as simple as writing a new ReminderOptions and Reminder subclass. The program automatically loads all ReminderOptions to the GUI.
 
 
 ## TODO
 - Make it easier to install and run
-- Add named profiles so users can save settings for quick reuse
+- Test the app on Windows and OSX
+  - I'm not sure if Raise Window and Maximize Window reminders work on other operating systems or window managers
