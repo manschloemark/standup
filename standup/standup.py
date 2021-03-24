@@ -629,8 +629,6 @@ class StandUpWindow(qw.QMainWindow):
 
 def main():
     app = qw.QApplication([])
-    # w = TimerWidget()
-    # w.show()
     standup = StandUpWindow()
     standup.show()
     sys.exit(app.exec_())
