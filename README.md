@@ -11,10 +11,7 @@ It's important to take breaks regularly and:
 
 ## How to run it
 
-### standup executable
-Just double click the standup.exe file!
-
-### The Old Way
+### Command Line
 First, make sure you have at least Python 3.6 by running:  
 ` python3 --version `  
 Second, make sure you have the PySide2 module for Python.
