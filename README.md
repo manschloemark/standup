@@ -25,8 +25,7 @@ Open the directory and run standup.py:
 
 ## How it works
 
-![Session Setup](../assets/sessionsetup.jpg?raw=true)
-![Countdown Timer](../assets/intervaltimer.jpg?raw=true)
+![Session Setup](../assets/sessionsetup.jpg?raw=true) ![Countdown Timer](../assets/intervaltimer.jpg?raw=true)
 
 ### Set timers
 - Session Duration : how long the program will run intervals
