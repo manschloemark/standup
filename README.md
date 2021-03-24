@@ -45,7 +45,7 @@ Open the directory and run standup.py:
   - Maximize StandUp window: the same as 'Raise StandUp window' but instead makes sure the window is maximized.
 - You can set different reminders for the end of focus and break intervals.
 
-### Custom Profiles
+### Save Custom Profiles
 - You can save session settings as a profile so you can quickly recreate the session in the future.
 
 
