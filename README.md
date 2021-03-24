@@ -25,6 +25,9 @@ Open the directory and run standup.py:
 
 ## How it works
 
+![Session Setup](../assets/sessionsetup.jpg?raw=true)
+![Countdown Timer](../assets/intervaltimer.jpg?raw=true)
+
 ### Set timers
 - Session Duration : how long the program will run intervals
   - Set this to 0 to run intervals until you stop it
@@ -43,10 +46,9 @@ Open the directory and run standup.py:
   - Maximize StandUp window: the same as 'Raise StandUp window' but instead makes sure the window is maximized.
 - You can set different reminders for the end of focus and break intervals.
 
-### That's it!
-
 ### Custom Profiles
 - You can save session settings as a profile so you can quickly recreate the session in the future.
+
 
 ## Learning Outcomes
 - Qt6
