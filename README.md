@@ -69,5 +69,3 @@ Open the directory and run standup.py:
   - ReminderOptions subclasses are Qt widgets that let users configure reminders.
   - Reminder classes are objects that encapsulate the code that make the reminders happen. The StandUp app doesn't need to know about the details of the reminder, it just calls Reminder.handle() to make it happen.
   - Adding new reminders is as simple as writing a new ReminderOptions and Reminder subclass. The program automatically loads all ReminderOptions to the GUI.
-- PyInstaller
-  - I learned how to use PyInstaller to make a cross-platform executable file
