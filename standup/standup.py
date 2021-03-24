@@ -9,8 +9,8 @@ import sys
 from PySide6 import QtWidgets as qw
 from PySide6 import QtCore, QtGui
 
-from QProgressRing import QProgressRing
-import reminders
+from standup.QProgressRing import QProgressRing
+from standup import reminders
 
 # TEMP GLOBAL VARIABLE TO PROFILE
 DEBUG_profile_filename = "./profiles.json"
