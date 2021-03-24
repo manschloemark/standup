@@ -520,6 +520,7 @@ class StandUpWindow(qw.QMainWindow):
     def __init__(self):
         super().__init__()
         self.window_title = "Stand Up"
+        self.setWindowTitle(self.window_title)
 
         self.init_ui()
 
@@ -536,8 +537,6 @@ class StandUpWindow(qw.QMainWindow):
         self.transition_layout = qw.QVBoxLayout(self.transition_screen)
 
         # Set up start screen
-        self.title = qw.QLabel("Stand Up", alignment=QtCore.Qt.AlignCenter)
-
         self.profile_select = ProfileSelect()
         self.profile_select.profileChanged.connect(self.loadProfile)
         self.profile_select.createProfile.connect(self.saveProfile)
@@ -553,7 +552,6 @@ class StandUpWindow(qw.QMainWindow):
         self.start_session_button = qw.QPushButton("Start Session")
         self.start_session_button.clicked.connect(self.start_session)
 
-        self.start_layout.addWidget(self.title, 0, QtCore.Qt.AlignCenter)
         self.start_layout.addWidget(self.profile_select, 0, QtCore.Qt.AlignCenter)
         self.start_layout.addWidget(self.session_instruction, 0, QtCore.Qt.AlignCenter)
         self.start_layout.addWidget(self.session_options, 1)
