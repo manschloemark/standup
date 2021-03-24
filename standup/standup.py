@@ -2,6 +2,7 @@
     GUI application to plan work sessions with focus and break intervals.
 """
 import json
+import os
 
 import webbrowser
 
@@ -12,11 +13,21 @@ from PySide2 import QtCore, QtGui
 from standup.QProgressRing import QProgressRing
 from standup import reminders
 
-# TEMP GLOBAL VARIABLE TO PROFILE
-DEBUG_profile_filename = "./profiles.json"
+# TODO clean this up
+# Try to use os-specfific directory for app data
+home = os.getenv("HOME")
+if sys.platform == "win32":
+    profile_path = os.path.join(home, "AppData", "Roaming", "standup", "profiles.json")
+elif sys.platform.startswith("linux"):
+    profile_path = os.path.join(home, ".local", "share", "standup", "profiles.json")
+elif sys.platform == "darwin":
+    profile_path = os.path.join(home, "Library", "Application Support", "standup", "profiles.json")
+else:
+    profile_path = None
+os.makedirs(os.path.dirname(profile_path), exist_ok=True)
 
 
-def load_profiles(filename=DEBUG_profile_filename):
+def load_profiles(filename=profile_path):
     with open(filename, "a+") as config:
         config.seek(0)
         try:
@@ -31,8 +42,8 @@ def load_profile(profile_name: str):
     return profile
 
 
-def save_profiles(data):
-    with open(DEBUG_profile_filename, "w+") as config:
+def save_profiles(data, filename=profile_path):
+    with open(filename, "w+") as config:
         json.dump(data, config, indent="  ")
 
 
