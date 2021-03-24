@@ -1,12 +1,12 @@
 """
     Mark Schloeman
 
-    Custom PyQt6 QWidget that functions like a QProgressBar
+    Custom PyQt2 QWidget that functions like a QProgressBar
     that draws a circle instead of a bar.
 """
 
 import math
-from PySide6 import QtGui, QtCore, QtWidgets
+from PySide2 import QtGui, QtCore, QtWidgets
 
 
 class QProgressRing(QtWidgets.QWidget):

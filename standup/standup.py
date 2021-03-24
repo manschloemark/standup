@@ -6,8 +6,8 @@ import json
 import webbrowser
 
 import sys
-from PySide6 import QtWidgets as qw
-from PySide6 import QtCore, QtGui
+from PySide2 import QtWidgets as qw
+from PySide2 import QtCore, QtGui
 
 from standup.QProgressRing import QProgressRing
 from standup import reminders
