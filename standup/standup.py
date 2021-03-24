@@ -128,7 +128,6 @@ class IntervalOptions(qw.QWidget):
     def initUI(self):
         self.layout = qw.QFormLayout(self)
         self.layout.setFieldGrowthPolicy(qw.QFormLayout.FieldsStayAtSizeHint)
-        self.layout.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTop)
         self.duration_label = qw.QLabel("Interval Length:")
         self.duration_input = DurationSpinBox()
         self.reminder_label = qw.QLabel("Reminder:")
@@ -189,7 +188,7 @@ class SessionOptions(qw.QWidget):
         focus_interval_scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         focus_interval_scroll.setWidgetResizable(True)
         focus_interval_scroll.setSizePolicy(
-            qw.QSizePolicy.Expanding, qw.QSizePolicy.Expanding
+            qw.QSizePolicy.Minimum, qw.QSizePolicy.Expanding
         )
         focus_interval_frame = qw.QFrame()
         focus_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
@@ -201,7 +200,7 @@ class SessionOptions(qw.QWidget):
         break_interval_scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         break_interval_scroll.setWidgetResizable(True)
         break_interval_scroll.setSizePolicy(
-            qw.QSizePolicy.Expanding, qw.QSizePolicy.Expanding
+            qw.QSizePolicy.Minimum, qw.QSizePolicy.Expanding
         )
         break_interval_frame = qw.QFrame()
         break_interval_frame.setFrameStyle(qw.QFrame.StyledPanel | qw.QFrame.Sunken)
