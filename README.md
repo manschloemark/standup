@@ -10,13 +10,18 @@ It's important to take breaks regularly and:
  1. clear your head
 
 ## How to run it
+
+### standup executable
+Just double click the standup.exe file!
+
+### The Old Way
 First, make sure you have at least Python 3.6 by running:  
 ` python3 --version `  
-Second, make sure you have the PySide6 module for Python.
-Check if PySide6 is in the output of this command:  
+Second, make sure you have the PySide2 module for Python.
+Check if PySide2 is in the output of this command:  
 `python3 -m pip list`  
-If you do not see PySide6 in this list, you need to install it with:
- `python3 -m pip install PySide6`  
+If you do not see PySide2 in this list, you need to install it with:
+ `python3 -m pip install PySide2`  
 
 Once you have a Python environment that can run it, clone this repo with:  
 `git clone https://github.com/manschloemark/standup.git`  
@@ -50,8 +55,9 @@ Open the directory and run standup.py:
 
 
 ## Learning Outcomes
-- Qt6
-  - This was my first project using Qt6. Prior to this I used Qt5.
+- ~~Qt6~~
+  - ~~This was my first project using Qt6. Prior to this I used Qt5.~~
+  - PyInstaller is not compatible with PySide6 so I reverted to PySide2.
 - PySide
   - Before this project I used the PyQt bindings. The transition between the two was pretty smooth.
 - In-depth Custom Widgets
@@ -66,3 +72,5 @@ Open the directory and run standup.py:
   - ReminderOptions subclasses are Qt widgets that let users configure reminders.
   - Reminder classes are objects that encapsulate the code that make the reminders happen. The StandUp app doesn't need to know about the details of the reminder, it just calls Reminder.handle() to make it happen.
   - Adding new reminders is as simple as writing a new ReminderOptions and Reminder subclass. The program automatically loads all ReminderOptions to the GUI.
+- PyInstaller
+  - I learned how to use PyInstaller to make a cross-platform executable file
