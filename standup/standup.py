@@ -13,14 +13,12 @@ from PySide2 import QtCore, QtGui
 from standup.QProgressRing import QProgressRing
 from standup import reminders
 
-# TODO clean this up
-# Try to use os-specfific directory for app data
 home = os.getenv("HOME")
 if sys.platform == "win32":
     profile_path = os.path.join(home, "AppData", "Roaming", "standup", "profiles.json")
 elif sys.platform.startswith("linux"):
     profile_path = os.path.join(home, ".local", "share", "standup", "profiles.json")
-elif sys.platform == "darwin":
+elif sys.platform == "darwin": # Mac
     profile_path = os.path.join(home, "Library", "Application Support", "standup", "profiles.json")
 else:
     profile_path = None
@@ -94,7 +92,6 @@ class SessionQueue:
     """
 
     def __init__(self, total_length, focus_intervals, break_intervals):
-        # TODO Implement Me
         self.session_remaining = total_length
         self.focus_intervals = focus_intervals
         self.focus_index = 0
@@ -184,7 +181,7 @@ class SessionOptions(qw.QWidget):
     def init_ui(self):
         self.layout = qw.QGridLayout(self)
 
-        # TODO customize SpinBoxes so they work nicely for time
+        # TODO : customize SpinBoxes so they work nicely for time
         # The units for these SpinBoxes is minutes but the timer uses seconds
         self.session_dur_label = qw.QLabel("Session Length:")
         self.session_duration = DurationSpinBox()
