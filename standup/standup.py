@@ -24,10 +24,11 @@ elif sys.platform == "darwin":
     profile_path = os.path.join(home, "Library", "Application Support", "standup", "profiles.json")
 else:
     profile_path = None
-os.makedirs(os.path.dirname(profile_path), exist_ok=True)
+if profile_path:
+    os.makedirs(os.path.dirname(profile_path), exist_ok=True)
 
 
-def load_profiles(filename=profile_path):
+def read_profiles(filename=profile_path):
     with open(filename, "a+") as config:
         config.seek(0)
         try:
@@ -36,29 +37,28 @@ def load_profiles(filename=profile_path):
             profiles = {}
         return profiles
 
-
 def load_profile(profile_name: str):
-    profile = load_profiles().get(profile_name)
+    profile = read_profiles().get(profile_name)
     return profile
 
 
-def save_profiles(data, filename=profile_path):
+def write_profiles(data, filename=profile_path):
     with open(filename, "w+") as config:
         json.dump(data, config, indent="  ")
 
 
 def save_profile(profile_name: str, data: dict):
-    profiles = load_profiles()
+    profiles = read_profiles()
     profiles[profile_name] = data
-    save_profiles(profiles)
+    write_profiles(profiles)
 
 
 def delete_profile(profile_name):
-    profiles = load_profiles()
+    profiles = read_profiles()
     del profiles[
         profile_name
     ]  # TODO add try-catch? Technically this shouldn't fail but you never know
-    save_profiles(profiles)
+    write_profiles(profiles)
 
 
 def get_children(layout):
@@ -470,15 +470,15 @@ class ProfileSelect(qw.QWidget):
         self.profile_dropdown.setPlaceholderText("-- Load Profile --")
         self.profile_dropdown.currentTextChanged.connect(self.profileSelected)
 
-        for profile_name in load_profiles().keys():
+        for profile_name in read_profiles().keys():
             self.profile_dropdown.addItem(profile_name)
 
-        update_profile = qw.QPushButton("Overwrite")
+        update_profile = qw.QPushButton("Save")
         update_profile.clicked.connect(
                 self.overwriteProfileClicked
         )
 
-        save_new_profile = qw.QPushButton("Save New")
+        save_new_profile = qw.QPushButton("Save As...")
         save_new_profile.clicked.connect(self.saveNewProfileClicked)
 
         delete_current_profile = qw.QPushButton("Delete")
@@ -496,16 +496,16 @@ class ProfileSelect(qw.QWidget):
             self.profileChanged.emit(name)
 
     def getUniqueProfileName(self):
-        taken_names = [profile_name.lower() for profile_name in load_profiles().keys()]
+        taken_names = [profile_name.lower() for profile_name in read_profiles().keys()]
         valid_name = False
         name = None
         while not valid_name:
             name, ok_clicked = qw.QInputDialog.getText(
                 self, "New Profile", "Profile Name"
             )
-            valid_name = name and name.strip() and name.lower() not in taken_names and ok_clicked
             if not ok_clicked:
                 break
+            valid_name = (name and name.strip()) and (name.lower() not in taken_names)
         return name if valid_name else None
 
     def saveNewProfileClicked(self, *args):
@@ -516,7 +516,7 @@ class ProfileSelect(qw.QWidget):
 
     def overwriteProfileClicked(self, *args):
         profile_name = self.profile_dropdown.currentText()
-        if not profile_name and profile_name.strip():
+        if profile_name and profile_name.strip():
             self.updateProfile.emit(profile_name)
 
     def deleteProfileClicked(self, *args):
