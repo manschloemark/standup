@@ -573,6 +573,9 @@ class StandUpWindow(qw.QMainWindow):
 
         # Set up transition screen
         self.transition_message = qw.QLabel()
+        self.transition_message.setAlignment(QtCore.Qt.AlignCenter)
+        self.transition_message.setWordWrap(True)
+        self.transition_message.setStyleSheet("QLabel{font-size: 26pt; text-align: center; margin: auto}")
         self.continue_button = qw.QPushButton("Next Interval")
         self.continue_button.clicked.connect(self.start_next_interval)
 
