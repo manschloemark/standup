@@ -627,8 +627,11 @@ class StandUpWindow(qw.QMainWindow):
         if timer_finished:
             if self.reminder:
                 self.transition_message.setText(self.reminder.message)
-                self.reminder.handle()
-                self.screen_stack.setCurrentWidget(self.transition_screen)
+                start_next = self.reminder.trigger()
+                if start_next:
+                    self.start_next_interval()
+                else:
+                    self.screen_stack.setCurrentWidget(self.transition_screen)
             else:
                 self.start_next_interval()
         else:
