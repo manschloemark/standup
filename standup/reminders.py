@@ -95,6 +95,9 @@ class MessageReminderOptions(qw.QWidget):
 
         self.layout.addRow(message_label, self.message_input)
 
+    def getData(self):
+        return {"name": self.name, "message": self.message_input.text()}
+
 
 class BrowserReminderOptions(ReminderOptions):
     name = "Open URL"
@@ -148,42 +151,57 @@ class BrowserReminderOptions(ReminderOptions):
         return BrowserReminder(url, policy)
 
 
-class RaiseWindowReminderOptions(MessageReminderOptions, ReminderOptions):
-    name = "Raise Window"
+class PopupWindowReminderOptions(MessageReminderOptions, ReminderOptions):
+    name = "Popup Window"
 
     def __init__(self):
         super().__init__()
-
-    def getData(self):
-        return {"name": self.name, "message": self.message_input.text()}
 
     def putData(self, data):
         self.message_input.setText(data["message"])
 
     def getReminder(self):
-        message = self.message_input.text()
-        return RaiseWindowReminder(message, self.window())
+        return PopupWindowReminder(self.message_input.text())
 
 
-class MaximizeWindowReminderOptions(MessageReminderOptions, ReminderOptions):
-    name = "Maximize Window"
-
-    def __init__(self):
-        super().__init__()
-
-    def getData(self):
-        return {"name": self.name, "message": self.message_input.text()}
-
-    def putData(self, data):
-        self.message_input.setText(data["message"])
-
-    def getReminder(self):
-        message = self.message_input.text()
-        return MaximizeWindowReminder(message, self.window())
+### NOTE: Reminders that raise the window do not seem to work on Linux so I am just removing them for now.
+### Popup reminders should basically get the job done.
+#class RaiseWindowReminderOptions(MessageReminderOptions, ReminderOptions):
+#    name = "Raise Window"
+#
+#    def __init__(self):
+#        super().__init__()
+#
+#    def getData(self):
+#        return {"name": self.name, "message": self.message_input.text()}
+#
+#    def putData(self, data):
+#        self.message_input.setText(data["message"])
+#
+#    def getReminder(self):
+#        message = self.message_input.text()
+#        return RaiseWindowReminder(message, self.window())
+#
+#
+#class MaximizeWindowReminderOptions(MessageReminderOptions, ReminderOptions):
+#    name = "Maximize Window"
+#
+#    def __init__(self):
+#        super().__init__()
+#
+#    def getData(self):
+#        return {"name": self.name, "message": self.message_input.text()}
+#
+#    def putData(self, data):
+#        self.message_input.setText(data["message"])
+#
+#    def getReminder(self):
+#        message = self.message_input.text()
+#        return MaximizeWindowReminder(message, self.window())
 
 
 class Reminder:
-    def handle(self):
+    def trigger(self):
         raise NotImplementedError
 
     def __repr__(self):
@@ -197,8 +215,9 @@ class BrowserReminder(Reminder):
         self.url = url
         self.policy = policy
 
-    def handle(self):
+    def trigger(self):
         webbrowser.open(self.url, new=self.policy)
+        return False
 
 
 class RaiseWindowReminder(Reminder):
@@ -207,13 +226,15 @@ class RaiseWindowReminder(Reminder):
         self.message = message
         self.window = window
 
-    def handle(self):
+    def trigger(self):
         # NOTE: There is a chance this doesn't work on Windows or Mac.
         # Or maybe even window managers other than X11
-        self.window.setWindowState(
-            self.window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive
-        )
-        self.window.activateWindow()
+        #self.window.setWindowState(
+        #    self.window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive
+        #)
+        #self.window.activateWindow()
+        self.window.showNormal()
+        return False
 
 
 class MaximizeWindowReminder(Reminder):
@@ -222,9 +243,26 @@ class MaximizeWindowReminder(Reminder):
         self.message = message
         self.window = window
 
-    def handle(self):
-        self.window.setWindowState(Qt.WindowMaximized)
-        self.window.activateWindow()
+    def trigger(self):
+        #self.window.setWindowState(Qt.WindowMaximized)
+        #self.window.activateWindow()
+        self.window.showMaximized()
+        return False
+
+class PopupWindowReminder(Reminder):
+    def __init__(self, message):
+        super().__init__()
+        self.message = message
+
+    def trigger(self):
+        popup = qw.QMessageBox()
+        popup.addButton("Close", qw.QMessageBox.RejectRole)
+        continue_button = popup.addButton("Next Interval", qw.QMessageBox.AcceptRole)
+        popup.setWindowTitle("Stand Up Reminder")
+        popup.setText(self.message)
+        response = popup.exec()
+        return popup.clickedButton() == continue_button
+        
 
 
 reminder_option_dict = {
