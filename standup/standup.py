@@ -13,6 +13,7 @@ from PySide2 import QtCore, QtGui
 from standup.QProgressRing import QProgressRing
 from standup import reminders
 
+
 def get_profile_location():
     home = os.getenv("HOME")
     filename = "profiles.json"
