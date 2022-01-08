@@ -13,16 +13,17 @@ from PySide2 import QtCore, QtGui
 from standup.QProgressRing import QProgressRing
 from standup import reminders
 
-def get_storage_dir():
+def get_profile_location():
     home = os.getenv("HOME")
+    filename = "profiles.json"
     if sys.platform == "win32":
-        profile_path = os.path.join(home, "AppData", "Roaming", "standup", "profiles.json")
+        profile_path = os.path.join(home, "AppData", "Roaming", "standup", filename)
     elif sys.platform.startswith("linux"):
-        profile_path = os.path.join(home, ".local", "share", "standup", "profiles.json")
+        profile_path = os.path.join(home, ".local", "share", "standup", filename)
     elif sys.platform == "darwin": # Mac
-        profile_path = os.path.join(home, "Library", "Application Support", "standup", "profiles.json")
+        profile_path = os.path.join(home, "Library", "Application Support", "standup", filename)
     else:
-        profile_path = None
+        profile_path = os.path.join(os.path.dirname(__file__), filename)
     if profile_path:
         os.makedirs(os.path.dirname(profile_path), exist_ok=True)
     return profile_path
@@ -30,7 +31,7 @@ def get_storage_dir():
 
 def read_profiles(filename=None):
     if filename is None:
-        filename = get_storage_dir()
+        filename = get_profile_location()
     with open(filename, "a+") as config:
         config.seek(0)
         try:
@@ -46,7 +47,7 @@ def load_profile(profile_name: str):
 
 def write_profiles(data, filename=None):
     if filename is None:
-        filename = get_storage_dir()
+        filename = get_profile_location()
     with open(filename, "w+") as config:
         json.dump(data, config, indent="  ")
 
