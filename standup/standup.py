@@ -130,16 +130,18 @@ class SessionQueue:
         if self.session_remaining <= 0:
             return None, None, None
         interval_length = None
-        if self.is_break:
+        if self.is_break and len(self.break_intervals):
             interval_length, reminder = self.break_intervals[self.break_index]
             self.break_index += 1
             if self.break_index == len(self.break_intervals):
                 self.break_index = 0
-        else:
+        elif len(self.focus_intervals):
             interval_length, reminder = self.focus_intervals[self.focus_index]
             self.focus_index += 1
             if self.focus_index == len(self.focus_intervals):
                 self.focus_index = 0
+        else:
+            return None, None, None
 
         self.session_remaining -= interval_length
 
@@ -155,6 +157,7 @@ class SessionQueue:
 
 
 class IntervalOptions(qw.QWidget):
+
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -162,6 +165,9 @@ class IntervalOptions(qw.QWidget):
     def initUI(self):
         self.layout = qw.QFormLayout(self)
         self.layout.setFieldGrowthPolicy(qw.QFormLayout.FieldsStayAtSizeHint)
+        self.remove_button = qw.QPushButton("x")
+        self.remove_button.clicked.connect(self.deleteSelf)
+        self.remove_button.setToolTip("Remove Interval")
         self.duration_label = qw.QLabel("Interval Length:")
         self.duration_input = DurationSpinBox()
         self.reminder_label = qw.QLabel("Reminder:")
@@ -172,10 +178,14 @@ class IntervalOptions(qw.QWidget):
         for reminder_type in reminders.reminder_option_dict.keys():
             self.reminder_select.addItem(reminder_type)
 
+        self.layout.addRow(self.remove_button)
         self.layout.addRow(self.duration_label, self.duration_input)
         self.layout.addRow(self.reminder_label, self.reminder_select)
 
         self.setSizePolicy(qw.QSizePolicy.Expanding, qw.QSizePolicy.Fixed)
+
+    def deleteSelf(self):
+        self.deleteLater()
 
     def getData(self):
         duration = self.duration_input.value()
@@ -245,35 +255,20 @@ class SessionOptions(qw.QWidget):
         self.break_intervals_container.setAlignment(QtCore.Qt.AlignTop)
         break_interval_scroll.setWidget(break_interval_frame)
 
-        focus_button_container = qw.QHBoxLayout()
-        self.add_focus_interval = qw.QPushButton("+")
+        self.add_focus_interval = qw.QPushButton("Add Interval")
         self.add_focus_interval.clicked.connect(self.addFocusInterval)
-        self.remove_focus_interval = qw.QPushButton("-")
-        self.remove_focus_interval.clicked.connect(
-            lambda x: self.removeIntervals(self.focus_intervals_container)
-        )
 
-        focus_button_container.addWidget(focus_label)
-        focus_button_container.addWidget(self.add_focus_interval, 0, QtCore.Qt.AlignRight)
-        focus_button_container.addWidget(self.remove_focus_interval, 0, QtCore.Qt.AlignLeft)
-
-        break_button_container = qw.QHBoxLayout()
-        self.add_break_interval = qw.QPushButton("+")
+        self.add_break_interval = qw.QPushButton("Add Interval")
         self.add_break_interval.clicked.connect(self.addBreakInterval)
-        self.remove_break_interval = qw.QPushButton("-")
-        self.remove_break_interval.clicked.connect(
-            lambda x: self.removeIntervals(self.break_intervals_container)
-        )
 
-        break_button_container.addWidget(break_label)
-        break_button_container.addWidget(self.add_break_interval, 0, QtCore.Qt.AlignRight)
-        break_button_container.addWidget(self.remove_break_interval, 0, QtCore.Qt.AlignLeft)
-
-        self.interval_options_grid.addLayout(focus_button_container, 0, 0, QtCore.Qt.AlignCenter)
-        self.interval_options_grid.addLayout(break_button_container, 0, 1, QtCore.Qt.AlignCenter)
+        self.interval_options_grid.addWidget(focus_label, 0, 0, QtCore.Qt.AlignCenter)
+        self.interval_options_grid.addWidget(break_label, 0, 1, QtCore.Qt.AlignCenter)
 
         self.interval_options_grid.addWidget(focus_interval_scroll, 1, 0)
         self.interval_options_grid.addWidget(break_interval_scroll, 1, 1)
+
+        self.interval_options_grid.addWidget(self.add_focus_interval, 2, 0)
+        self.interval_options_grid.addWidget(self.add_break_interval, 2, 1)
 
         self.interval_options_grid.setRowStretch(1, 1)
 
@@ -288,40 +283,44 @@ class SessionOptions(qw.QWidget):
 
     def addFocusInterval(self):
         new_widget = IntervalOptions()
+        new_widget.destroyed.connect(self.colorIntervals)
         new_widget.setAutoFillBackground(True)
-        palette = new_widget.palette()
-
-        if self.focus_intervals_container.count() % 2:
-            palette.setColor(
-                palette.Window, palette.color(palette.Active, palette.Base)
-            )
-        else:
-            palette.setColor(
-                palette.Window, palette.color(palette.Active, palette.AlternateBase)
-            )
-
-        new_widget.setPalette(palette)
-
         self.focus_intervals_container.addWidget(new_widget)
+        self.colorContainer(self.focus_intervals_container)
 
     def addBreakInterval(self):
         new_widget = IntervalOptions()
+        new_widget.destroyed.connect(self.colorIntervals)
         new_widget.setAutoFillBackground(True)
-        palette = new_widget.palette()
-
-        if self.break_intervals_container.count() % 2:
-            palette.setColor(
-                palette.Window, palette.color(palette.Active, palette.AlternateBase)
-            )
-        else:
-            palette.setColor(
-                palette.Window, palette.color(palette.Active, palette.Base)
-            )
-
-        new_widget.setPalette(palette)
-
         self.break_intervals_container.addWidget(new_widget)
+        self.colorContainer(self.break_intervals_container)
 
+    def colorIntervals(self, obj):
+            self.colorContainer(self.focus_intervals_container, obj)
+            self.colorContainer(self.break_intervals_container, obj)
+
+    def colorContainer(self, container, deleted_widget=None):
+        i = 0
+        for widget in get_children(container):
+            if widget is deleted_widget:
+                continue
+            palette = widget.palette()
+            if i % 2:
+                palette.setColor(
+                    palette.Window, palette.color(palette.Active, palette.AlternateBase)
+                )
+            else:
+                palette.setColor(
+                    palette.Window, palette.color(palette.Active, palette.Base)
+                )
+            widget.setPalette(palette)
+            i += 1
+
+
+    #def removeIntervalWidget(self):
+
+    # NOTE: since this removes intervals from the bottom you do not
+    # need to use colorIntervals
     def removeIntervals(self, container, num_removing=1):
         count = container.count()
         for offset in range(min(count - 1, num_removing)):
