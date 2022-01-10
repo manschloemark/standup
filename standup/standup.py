@@ -166,7 +166,10 @@ class IntervalOptions(qw.QWidget):
 
     def putData(self, data):
         self.duration_input.setValue(data["duration"])
-        self.reminder_select.setCurrentText(data["reminder"]["name"])
+        reminder_type = data["reminder"]["name"]
+        if reminder_type not in reminders.reminder_option_dict:
+            reminder_type = "None"
+        self.reminder_select.setCurrentText(reminder_type)
         self.reminder_options.putData(data["reminder"])
 
     def reminderSelected(self, reminder_name):
@@ -472,9 +475,10 @@ class ProfileSelect(qw.QWidget):
         self.layout = qw.QHBoxLayout(self)
 
         self.profile_dropdown = qw.QComboBox()
-        #self.profile_dropdown.setPlaceholderText("-- Load Profile --")
         self.profile_dropdown.currentTextChanged.connect(self.profileSelected)
 
+        self.PLACEHOLDER_TEXT = "-- Load Profile --"
+        self.profile_dropdown.addItem(self.PLACEHOLDER_TEXT)
         for profile_name in read_profiles().keys():
             self.profile_dropdown.addItem(profile_name)
 
@@ -494,27 +498,42 @@ class ProfileSelect(qw.QWidget):
         self.layout.addWidget(save_new_profile, 1)
         self.layout.addWidget(delete_current_profile, 1)
 
-        self.profile_dropdown.setCurrentIndex(-1)
+        self.profile_dropdown.setCurrentIndex(0)
+
 
     def profileSelected(self, name):
+        if name == self.PLACEHOLDER_TEXT:
+            return
+        if name != self.PLACEHOLDER_TEXT:
+            self.profile_dropdown.removeItem(self.profile_dropdown.findText(self.PLACEHOLDER_TEXT))
         if name:
             self.profileChanged.emit(name)
 
     def getUniqueProfileName(self):
         taken_names = [profile_name.lower() for profile_name in read_profiles().keys()]
+        taken_names.append(self.PLACEHOLDER_TEXT)
         valid_name = False
         name = None
+        first_loop = True
         while not valid_name:
+            if first_loop:
+                msg = "Profile Name"
+            else:
+                msg = "Invalid Name! Try a different name"
+
             name, ok_clicked = qw.QInputDialog.getText(
-                self, "New Profile", "Profile Name"
+                self, "New Profile", msg
             )
             if not ok_clicked:
                 break
             valid_name = (name and name.strip()) and (name.lower() not in taken_names)
+            first_loop = False
         return name if valid_name else None
 
     def saveNewProfileClicked(self, *args):
         new_name = self.getUniqueProfileName()
+        if new_name is None:
+            return
         self.createProfile.emit(new_name)
         self.profile_dropdown.addItem(new_name)
         self.profile_dropdown.setCurrentText(new_name)
@@ -526,6 +545,8 @@ class ProfileSelect(qw.QWidget):
 
     def deleteProfileClicked(self, *args):
         deleted_name = self.profile_dropdown.currentText()
+        if deleted_name == self.PLACEHOLDER_TEXT:
+            return
         index_to_remove = self.profile_dropdown.currentIndex()
         self.profile_dropdown.setCurrentIndex(-1)
         self.profile_dropdown.removeItem(index_to_remove)
