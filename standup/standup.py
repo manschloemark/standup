@@ -30,6 +30,23 @@ def get_profile_location():
     return profile_path
 
 
+def validate_reminder_types(profiles):
+    """
+    Checks profile data for invalid reminder types and fixes errors
+    ex: profile uses a reminder type that has been removed)
+    If an invalid reminder type is found it is replaced with 'None'
+    """
+
+    for profile in profiles:
+        for interval in profiles[profile]["focus_intervals"]:
+            if interval["reminder"]["name"] not in reminders.reminder_option_dict:
+                interval["reminder"]["name"] = "None"
+        for interval in profiles[profile]["break_intervals"]:
+            if interval["reminder"]["name"] not in reminders.reminder_option_dict:
+                interval["reminder"]["name"] = "None"
+    return profiles
+
+
 def read_profiles(filename=None):
     if filename is None:
         filename = get_profile_location()
@@ -39,7 +56,10 @@ def read_profiles(filename=None):
             profiles = json.load(config)
         except json.JSONDecodeError:
             profiles = {}
+        profiles = validate_reminder_types(profiles)
+        write_profiles(profiles, None)
         return profiles
+
 
 def load_profile(profile_name: str):
     profile = read_profiles().get(profile_name)
