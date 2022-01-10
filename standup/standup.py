@@ -215,6 +215,16 @@ class IntervalOptions(qw.QWidget):
 class SessionOptions(qw.QWidget):
     def __init__(self):
         super().__init__()
+        _ODD_PALETTE = QtGui.QPalette()
+        _ODD_PALETTE.setColor(
+            _ODD_PALETTE.Window, _ODD_PALETTE.color(_ODD_PALETTE.Active, _ODD_PALETTE.AlternateBase)
+        )
+        _EVEN_PALETTE = QtGui.QPalette()
+        _EVEN_PALETTE.setColor(
+            _EVEN_PALETTE.Window, _EVEN_PALETTE.color(_EVEN_PALETTE.Active, _EVEN_PALETTE.Base)
+        )
+        self._PALETTES = [_EVEN_PALETTE, _ODD_PALETTE]
+
         self.init_ui()
 
     def init_ui(self):
@@ -286,7 +296,8 @@ class SessionOptions(qw.QWidget):
         new_widget.destroyed.connect(self.colorIntervals)
         new_widget.setAutoFillBackground(True)
         self.focus_intervals_container.addWidget(new_widget)
-        self.colorContainer(self.focus_intervals_container)
+        palette_index = (self.focus_intervals_container.count() - 1) % 2
+        new_widget.setPalette(self._PALETTES[palette_index])
 
     def addBreakInterval(self):
         new_widget = IntervalOptions()
@@ -294,6 +305,8 @@ class SessionOptions(qw.QWidget):
         new_widget.setAutoFillBackground(True)
         self.break_intervals_container.addWidget(new_widget)
         self.colorContainer(self.break_intervals_container)
+        palette_index = (self.break_intervals_container.count() - 1) % 2
+        new_widget.setPalette(self._PALETTES[palette_index])
 
     def colorIntervals(self, obj):
             self.colorContainer(self.focus_intervals_container, obj)
@@ -304,16 +317,7 @@ class SessionOptions(qw.QWidget):
         for widget in get_children(container):
             if widget is deleted_widget:
                 continue
-            palette = widget.palette()
-            if i % 2:
-                palette.setColor(
-                    palette.Window, palette.color(palette.Active, palette.AlternateBase)
-                )
-            else:
-                palette.setColor(
-                    palette.Window, palette.color(palette.Active, palette.Base)
-                )
-            widget.setPalette(palette)
+            widget.setPalette(self._PALETTES[i % 2])
             i += 1
 
 
@@ -324,11 +328,17 @@ class SessionOptions(qw.QWidget):
     def removeIntervals(self, container, num_removing=1):
         count = container.count()
         for offset in range(min(count - 1, num_removing)):
-            container.itemAt(count - offset - 1).widget().deleteLater()
+            w = container.itemAt(count - offset - 1).widget()
+            # NOTE : this is to prevent the destroyed signal from emitting and causing colorIntervals to run for no reason
+            w.blockSignals(True)
+            w.deleteLater()
 
     def _clearIntervals(self, container):
         for index in range(container.count(), 0, -1):
-            container.itemAt((index) - 1).widget().deleteLater()
+            w = container.itemAt((index) - 1).widget()
+            # NOTE : this is to prevent the destroyed signal from emitting and causing colorIntervals to run for no reason
+            w.blockSignals(True)
+            w.deleteLater()
 
     def get_session_queue(self):
         session_duration = self.session_duration.value() * 60
