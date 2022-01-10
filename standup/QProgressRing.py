@@ -158,7 +158,7 @@ class QProgressRing(QtWidgets.QWidget):
         timer_font.setStyleHint(QtGui.QFont.Monospace)
         timer_font.setPointSize(
             12
-        )  # TODO make this not hardcoded or change based on size of widget?
+            )  # TODO : make this not hardcoded or change based on size of widget?
 
         qp.setFont(timer_font)
         qp.drawText(self._square, int(QtCore.Qt.AlignCenter), self.getFormattedText())
