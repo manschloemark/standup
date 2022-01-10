@@ -107,10 +107,8 @@ class DurationSpinBox(qw.QSpinBox):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setRange(1, 600)
+        self.setSuffix(" min")
 
-    def textFromValue(self, value):
-        h, m = divmod(value, 60)
-        return f"{h}h {m}m"
 
 
 class SessionQueue:
