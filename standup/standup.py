@@ -472,7 +472,7 @@ class ProfileSelect(qw.QWidget):
         self.layout = qw.QHBoxLayout(self)
 
         self.profile_dropdown = qw.QComboBox()
-        self.profile_dropdown.setPlaceholderText("-- Load Profile --")
+        #self.profile_dropdown.setPlaceholderText("-- Load Profile --")
         self.profile_dropdown.currentTextChanged.connect(self.profileSelected)
 
         for profile_name in read_profiles().keys():
@@ -587,8 +587,8 @@ class StandUpWindow(qw.QMainWindow):
         self.continue_button = qw.QPushButton("Next Interval")
         self.continue_button.clicked.connect(self.start_next_interval)
 
-        self.transition_layout.addWidget(self.transition_message, QtCore.Qt.AlignCenter)
-        self.transition_layout.addWidget(self.continue_button, QtCore.Qt.AlignCenter)
+        self.transition_layout.addWidget(self.transition_message, 0, QtCore.Qt.AlignCenter)
+        self.transition_layout.addWidget(self.continue_button, 0, QtCore.Qt.AlignCenter)
 
         self.screen_stack.addWidget(self.start_screen)
         self.screen_stack.addWidget(self.timer_screen)
