@@ -161,7 +161,7 @@ class QProgressRing(QtWidgets.QWidget):
         )  # TODO make this not hardcoded or change based on size of widget?
 
         qp.setFont(timer_font)
-        qp.drawText(self._square, QtCore.Qt.AlignCenter, self.getFormattedText())
+        qp.drawText(self._square, int(QtCore.Qt.AlignCenter), self.getFormattedText())
 
     def render(self):
         qp = QtGui.QPainter()
