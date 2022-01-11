@@ -223,7 +223,7 @@ class IntervalOptions(qw.QWidget):
         if self.reminder_options:
             self.reminder_options.deleteLater()
         self.reminder_options = reminders.reminder_option_dict[reminder_name]()
-        self.layout.addWidget(self.reminder_options, 2, 0, 1, 3)
+        self.layout.addWidget(self.reminder_options, 2, 1, 1, 2)
 
     def getInterval(self):
         duration = self.duration_input.value() * 60
@@ -286,11 +286,13 @@ class SessionOptions(qw.QWidget):
         self.break_intervals_container.setAlignment(QtCore.Qt.AlignTop)
         break_interval_scroll.setWidget(break_interval_frame)
 
-        self.add_focus_interval = qw.QPushButton("Add Interval")
+        self.add_focus_interval = qw.QPushButton("+ Focus")
         self.add_focus_interval.clicked.connect(self.addFocusInterval)
+        self.add_focus_interval.setToolTip("Add focus interval")
 
-        self.add_break_interval = qw.QPushButton("Add Interval")
+        self.add_break_interval = qw.QPushButton("+ Break")
         self.add_break_interval.clicked.connect(self.addBreakInterval)
+        self.add_break_interval.setToolTip("Add break interval")
 
         self.interval_options_grid.addWidget(focus_label, 0, 0, QtCore.Qt.AlignCenter)
         self.interval_options_grid.addWidget(break_label, 0, 1, QtCore.Qt.AlignCenter)
@@ -523,7 +525,7 @@ class ProfileSelect(qw.QWidget):
         self.profile_dropdown = qw.QComboBox()
         self.profile_dropdown.currentTextChanged.connect(self.profileSelected)
 
-        self.PLACEHOLDER_TEXT = "-- Load Profile --"
+        self.PLACEHOLDER_TEXT = "-- Choose Profile --"
         self.profile_dropdown.addItem(self.PLACEHOLDER_TEXT)
         for profile_name in read_profiles().keys():
             self.profile_dropdown.addItem(profile_name)
@@ -626,9 +628,9 @@ class StandUpWindow(qw.QMainWindow):
         self.profile_select.updateProfile.connect(self.saveProfile)
         self.profile_select.deleteProfile.connect(self.deleteProfile)
 
-        self.session_instruction = qw.QLabel(
-            "Session Options", alignment=QtCore.Qt.AlignCenter
-        )
+        #self.session_instruction = qw.QLabel(
+        #    "Session Options", alignment=QtCore.Qt.AlignCenter
+        #)
 
         self.session_options = SessionOptions()
 
@@ -636,7 +638,7 @@ class StandUpWindow(qw.QMainWindow):
         self.start_session_button.clicked.connect(self.start_session)
 
         self.start_layout.addWidget(self.profile_select, 0, QtCore.Qt.AlignCenter)
-        self.start_layout.addWidget(self.session_instruction, 0, QtCore.Qt.AlignCenter)
+        #self.start_layout.addWidget(self.session_instruction, 0, QtCore.Qt.AlignCenter)
         self.start_layout.addWidget(self.session_options, 1)
         self.start_layout.addWidget(self.start_session_button, 0, QtCore.Qt.AlignTop)
 
