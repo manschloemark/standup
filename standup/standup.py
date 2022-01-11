@@ -10,6 +10,8 @@ import sys
 from PySide2 import QtWidgets as qw
 from PySide2 import QtCore, QtGui
 
+from standup import rcicons
+
 from standup.QProgressRing import QProgressRing
 from standup import reminders
 
@@ -717,6 +719,7 @@ class StandUpWindow(qw.QMainWindow):
 def main():
     app = qw.QApplication([])
     standup = StandUpWindow()
+    standup.setWindowIcon(QtGui.QIcon(":/icons/window_icon.png"))
     standup.show()
     sys.exit(app.exec_())
 

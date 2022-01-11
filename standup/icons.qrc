@@ -1,0 +1,5 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="icons">
+	<file alias="window_icon.png">./icons/fb256.png</file>
+</qresource>
+</RCC>
