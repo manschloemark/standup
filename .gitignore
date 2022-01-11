@@ -6,3 +6,4 @@ old_*.py
 build/
 dist/
 *.spec
+icons/
