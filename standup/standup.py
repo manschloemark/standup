@@ -199,7 +199,7 @@ class IntervalOptions(qw.QWidget):
         #)
         #self.remove_button.setPalette(palette)
 
-        self.remove_button.setIcon(QtGui.qApp.style().standardIcon(qw.QStyle.SP_TrashIcon))
+        self.remove_button.setIcon(qw.QApplication.instance().style().standardIcon(qw.QStyle.SP_TrashIcon))
         
         self.remove_button.setStyleSheet("QToolButton { background-color: darkred }")
 
