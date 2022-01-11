@@ -227,8 +227,10 @@ class BrowserReminder(Reminder):
     message = "Opening URL..."
 
     def __init__(self, url, policy):
+        # TODO : use some library that deals with urls to make this less error-prone
+        url = url.replace("http://", "https://")
         if not url.startswith("https://"):
-            self.url = "https://" + url # NOTE : it seems that on Mac, urls need to start with https to open in firefox
+            self.url = "https://" + url
         else:
             self.url = url
         self.policy = policy
