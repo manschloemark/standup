@@ -220,34 +220,34 @@ class BrowserReminder(Reminder):
         return False
 
 
-class RaiseWindowReminder(Reminder):
-    def __init__(self, message, window):
-        super().__init__()
-        self.message = message
-        self.window = window
-
-    def trigger(self):
-        # NOTE: There is a chance this doesn't work on Windows or Mac.
-        # Or maybe even window managers other than X11
-        #self.window.setWindowState(
-        #    self.window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive
-        #)
-        #self.window.activateWindow()
-        self.window.showNormal()
-        return False
-
-
-class MaximizeWindowReminder(Reminder):
-    def __init__(self, message, window):
-        super().__init__()
-        self.message = message
-        self.window = window
-
-    def trigger(self):
-        #self.window.setWindowState(Qt.WindowMaximized)
-        #self.window.activateWindow()
-        self.window.showMaximized()
-        return False
+#class RaiseWindowReminder(Reminder):
+#    def __init__(self, message, window):
+#        super().__init__()
+#        self.message = message
+#        self.window = window
+#
+#    def trigger(self):
+#        # NOTE: There is a chance this doesn't work on Windows or Mac.
+#        # Or maybe even window managers other than X11
+#        #self.window.setWindowState(
+#        #    self.window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive
+#        #)
+#        #self.window.activateWindow()
+#        self.window.showNormal()
+#        return False
+#
+#
+#class MaximizeWindowReminder(Reminder):
+#    def __init__(self, message, window):
+#        super().__init__()
+#        self.message = message
+#        self.window = window
+#
+#    def trigger(self):
+#        #self.window.setWindowState(Qt.WindowMaximized)
+#        #self.window.activateWindow()
+#        self.window.showMaximized()
+#        return False
 
 class PopupWindowReminder(Reminder):
     def __init__(self, message):
