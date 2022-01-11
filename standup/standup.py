@@ -199,7 +199,7 @@ class IntervalOptions(qw.QWidget):
         #)
         #self.remove_button.setPalette(palette)
 
-        self.remove_button.setIcon(qw.QApplication.instance().style().standardIcon(qw.QStyle.SP_TrashIcon))
+        self.remove_button.setIcon(qw.QApplication.instance().style().standardIcon(qw.QStyle.SP_TrashIcon, None, self.remove_button))
         
         self.remove_button.setStyleSheet("QToolButton { background-color: darkred }")
 
@@ -223,6 +223,9 @@ class IntervalOptions(qw.QWidget):
         if self.reminder_options:
             self.reminder_options.deleteLater()
         self.reminder_options = reminders.reminder_option_dict[reminder_name]()
+        self.reminder_options.setSizePolicy(
+            qw.QSizePolicy.Minimum, qw.QSizePolicy.Expanding
+        )
         self.layout.addWidget(self.reminder_options, 2, 1, 1, 2)
 
     def getInterval(self):
