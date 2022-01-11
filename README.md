@@ -28,7 +28,7 @@ Stand Up is an app for planning work sessions with periods of focus and breaks.
 ### Save Session Profiles
 - You can save your session settings in profiles which can be quickly loaded any time.
 
-![Session Setup](../assets/sessionsetup.jpg?raw=true) ![Countdown Timer](../assets/intervaltimer.jpg?raw=true)
+![Session Setup](./docs/ex_setup.jpg?raw=true) ![Countdown Timer](./docs/ex_timer.jpg?raw=true)
 
 ## How to run it
 
