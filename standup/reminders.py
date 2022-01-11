@@ -39,6 +39,7 @@ class ReminderOptions(qw.QWidget):
 
     def __init__(self):
         super().__init__()
+        self.setContentsMargins(0, 0, 0, 0)
 
     def initUI(self):
         raise NotImplementedError
@@ -89,8 +90,8 @@ class MessageReminderOptions(qw.QWidget):
 
     def initUI(self):
         self.layout = qw.QFormLayout(self)
-        self.layout.setFormAlignment(Qt.AlignRight | Qt.AlignTop)
-        self.layout.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.layout.setFormAlignment(Qt.AlignRight)
+        self.layout.setLabelAlignment(Qt.AlignLeft)
         self.layout.setFieldGrowthPolicy(qw.QFormLayout.AllNonFixedFieldsGrow)
 
         message_label = qw.QLabel("Message:")
@@ -112,8 +113,8 @@ class BrowserReminderOptions(ReminderOptions):
 
     def initUI(self):
         self.layout = qw.QFormLayout(self)
-        self.layout.setFormAlignment(Qt.AlignRight | Qt.AlignTop)
-        self.layout.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.layout.setFormAlignment(Qt.AlignRight)
+        self.layout.setLabelAlignment(Qt.AlignLeft)
         self.layout.setFieldGrowthPolicy(qw.QFormLayout.AllNonFixedFieldsGrow)
 
         url_label = qw.QLabel("URL:")
