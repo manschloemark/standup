@@ -215,6 +215,13 @@ class IntervalOptions(qw.QWidget):
 class SessionOptions(qw.QWidget):
     def __init__(self):
         super().__init__()
+        self.init_ui()
+
+    def init_ui(self):
+        # Create palettes used by intervals
+        # NOTE : this was part of the colorContainer and addInterval rework.
+        # I don't even know if it is worth the tradeoff because now I store a list with two QPalettes instead of making them on the fly.
+        # I think it's better to avoid calling colorContainer multiple times for no reason.
         _ODD_PALETTE = QtGui.QPalette()
         _ODD_PALETTE.setColor(
             _ODD_PALETTE.Window, _ODD_PALETTE.color(_ODD_PALETTE.Active, _ODD_PALETTE.AlternateBase)
@@ -224,13 +231,8 @@ class SessionOptions(qw.QWidget):
             _EVEN_PALETTE.Window, _EVEN_PALETTE.color(_EVEN_PALETTE.Active, _EVEN_PALETTE.Base)
         )
         self._PALETTES = [_EVEN_PALETTE, _ODD_PALETTE]
-
-        self.init_ui()
-
-    def init_ui(self):
         self.layout = qw.QGridLayout(self)
 
-        # TODO : customize SpinBoxes so they work nicely for time
         # The units for these SpinBoxes is minutes but the timer uses seconds
         self.session_dur_label = qw.QLabel("Session Length:")
         self.session_duration = DurationSpinBox()
@@ -296,7 +298,7 @@ class SessionOptions(qw.QWidget):
         new_widget.destroyed.connect(self.colorIntervals)
         new_widget.setAutoFillBackground(True)
         self.focus_intervals_container.addWidget(new_widget)
-        palette_index = (self.focus_intervals_container.count() - 1) % 2
+        palette_index = (self.focus_intervals_container.count() - 1) % 2 # even or odd?
         new_widget.setPalette(self._PALETTES[palette_index])
 
     def addBreakInterval(self):
@@ -320,8 +322,6 @@ class SessionOptions(qw.QWidget):
             widget.setPalette(self._PALETTES[i % 2])
             i += 1
 
-
-    #def removeIntervalWidget(self):
 
     # NOTE: since this removes intervals from the bottom you do not
     # need to use colorIntervals
