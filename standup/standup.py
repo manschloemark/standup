@@ -18,9 +18,11 @@ from standup import reminders
 
 def get_profile_location():
     home = os.getenv("HOME")
+    if home is None:
+        home = os.getenv("UserProfile")
     filename = "profiles.json"
     if sys.platform == "win32":
-        profile_path = os.path.join(home, "AppData", "Roaming", "standup", filename)
+        profile_path = os.path.join(home, "AppData", "Local", "standup", filename)
     elif sys.platform.startswith("linux"):
         profile_path = os.path.join(home, ".local", "share", "standup", filename)
     elif sys.platform == "darwin": # Mac
