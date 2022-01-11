@@ -161,11 +161,13 @@ class IntervalOptions(qw.QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
+        self.setStyles()
 
     def initUI(self):
-        self.layout = qw.QFormLayout(self)
-        self.layout.setFieldGrowthPolicy(qw.QFormLayout.FieldsStayAtSizeHint)
-        self.remove_button = qw.QPushButton("x")
+        self.layout = qw.QGridLayout(self)
+        #self.layout.setFieldGrowthPolicy(qw.QFormLayout.FieldsStayAtSizeHint)
+        self.remove_button = qw.QToolButton()
+        #self.remove_button.setSizePolicy(qw.QSizePolicy(qw.QSizePolicy.Maximum, qw.QSizePolicy.Fixed))
         self.remove_button.clicked.connect(self.deleteSelf)
         self.remove_button.setToolTip("Remove Interval")
         self.duration_label = qw.QLabel("Interval Length:")
@@ -178,11 +180,26 @@ class IntervalOptions(qw.QWidget):
         for reminder_type in reminders.reminder_option_dict.keys():
             self.reminder_select.addItem(reminder_type)
 
-        self.layout.addRow(self.remove_button)
-        self.layout.addRow(self.duration_label, self.duration_input)
-        self.layout.addRow(self.reminder_label, self.reminder_select)
+        self.layout.addWidget(self.remove_button, 0, 0)
+        self.layout.addWidget(self.duration_label, 0, 1)
+        self.layout.addWidget(self.duration_input, 0, 2)
+        self.layout.addWidget(self.reminder_label, 1, 1)
+        self.layout.addWidget(self.reminder_select, 1, 2)
 
         self.setSizePolicy(qw.QSizePolicy.Expanding, qw.QSizePolicy.Fixed)
+
+    def setStyles(self):
+
+        # NOTE : I wanted to change the color of the icon but I couldn't.
+        #palette = QtGui.QPalette()
+        #palette.setColor(
+            #palette.ButtonText, palette.color(palette.Active, palette.ButtonText)
+        #)
+        #self.remove_button.setPalette(palette)
+
+        self.remove_button.setIcon(QtGui.qApp.style().standardIcon(qw.QStyle.SP_TrashIcon))
+        
+        self.remove_button.setStyleSheet("QToolButton { background-color: darkred }")
 
     def deleteSelf(self):
         self.deleteLater()
@@ -204,7 +221,7 @@ class IntervalOptions(qw.QWidget):
         if self.reminder_options:
             self.reminder_options.deleteLater()
         self.reminder_options = reminders.reminder_option_dict[reminder_name]()
-        self.layout.addRow(self.reminder_options)
+        self.layout.addWidget(self.reminder_options, 2, 0, 1, 3)
 
     def getInterval(self):
         duration = self.duration_input.value() * 60
