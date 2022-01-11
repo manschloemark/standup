@@ -89,6 +89,9 @@ class MessageReminderOptions(qw.QWidget):
 
     def initUI(self):
         self.layout = qw.QFormLayout(self)
+        self.layout.setFormAlignment(Qt.AlignRight | Qt.AlignTop)
+        self.layout.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.layout.setFieldGrowthPolicy(qw.QFormLayout.AllNonFixedFieldsGrow)
 
         message_label = qw.QLabel("Message:")
         self.message_input = qw.QLineEdit()
@@ -109,6 +112,9 @@ class BrowserReminderOptions(ReminderOptions):
 
     def initUI(self):
         self.layout = qw.QFormLayout(self)
+        self.layout.setFormAlignment(Qt.AlignRight | Qt.AlignTop)
+        self.layout.setLabelAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.layout.setFieldGrowthPolicy(qw.QFormLayout.AllNonFixedFieldsGrow)
 
         url_label = qw.QLabel("URL:")
         self.url_input = qw.QLineEdit()
@@ -130,6 +136,14 @@ class BrowserReminderOptions(ReminderOptions):
         vbox.addWidget(new_tab)
         vbox.addWidget(new_window)
         vbox.addWidget(same_window)
+
+        url_label.setSizePolicy(
+            qw.QSizePolicy.Minimum, qw.QSizePolicy.Expanding
+        )
+
+        self.url_input.setSizePolicy(
+            qw.QSizePolicy.Minimum, qw.QSizePolicy.Expanding
+        )
 
         self.layout.addRow(url_label, self.url_input)
         self.layout.addRow(tab_policies)
