@@ -11,7 +11,6 @@ Stand Up is an app for planning work sessions with periods of focus and breaks.
 
 ### Set Timers
 - Session Length : total time you plan to work at your computer
-  - Setting this to 0 will run intervals until you stop it
 - Focus Intervals  : how long you work before taking a break
 - Break Intervals  : how long your breaks are
 - Interval Queues  :
