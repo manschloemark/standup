@@ -28,8 +28,8 @@
 """
 
 import webbrowser
-import PySide2.QtWidgets as qw
-from PySide2.QtCore import Qt
+import PySide6.QtWidgets as qw
+from PySide6.QtCore import Qt
 
 ### BASE CLASSES ###
 

@@ -7,8 +7,8 @@ import os
 import webbrowser
 
 import sys
-from PySide2 import QtWidgets as qw
-from PySide2 import QtCore, QtGui
+from PySide6 import QtWidgets as qw
+from PySide6 import QtCore, QtGui
 
 from standup import rcicons
 
@@ -728,7 +728,7 @@ def main():
     standup = StandUpWindow()
     standup.setWindowIcon(QtGui.QIcon(":/icons/window_icon.png"))
     standup.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

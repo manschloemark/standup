@@ -6,7 +6,7 @@
 """
 
 import math
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide6 import QtGui, QtCore, QtWidgets
 
 
 class QProgressRing(QtWidgets.QWidget):
@@ -202,4 +202,4 @@ if __name__ == "__main__":
     l.addWidget(button)
     ring.show()
     ex.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
